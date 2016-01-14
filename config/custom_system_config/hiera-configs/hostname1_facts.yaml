@@ -1,0 +1,53 @@
+---
+
+# the jira version to install
+atlassian_version: '6.4.11'
+# the name of the jira instance, this will be the serice name and the installation will be in /opt/<INSTANCE_NAME>
+atlassian_instance_name: 'example_jira'
+# the jira administrator username 
+atlassian_admin_user: 'admin'
+# the jira administrator password
+atlassian_admin_pass: 'changeme'
+# the name of the mysql database to use
+atlassian_database_name: 'example_jira'
+# the mysql user for jira to use
+atlassian_database_user: 'example_jira'
+# the mysql password for jira to use
+atlassian_database_pass: 'changeme'
+# the mysql root users password
+atlassian_root_password: 'changeme'
+# the service user for jira
+atlassian_hosting_group: 'atlassian'
+# the service group for jiral
+atlassian_hosting_user: 'atlassian'
+# the jira license, the one below is a 3 hour timebomb license, for details see
+# https://developer.atlassian.com/market/add-on-licensing-for-developers/timebomb-licenses-for-testing
+atlassian_license: |
+    AAABiQ0ODAoPeNp1kk9TwjAQxe/9FJnxXKYpeoCZHqCtgsqfgaIO4yWELURD0tm0KN/eWOjYdvD68
+    vbtb3dzM9GKTBgS2iOU9n3a7/pkHiXE96jvbNhho3XnWXBQBuKtyIVWQTxN4sV8MV7GTirMHk5QO
+    ZJTBsG91eITvPdJBEeQOgN0uNRHwIYtLKWGa1ocNoCzdGUATUA9h2uVdhjPxRGCHAtw5gXyPTMQs
+    RwCn1Lf9XzXv3NqwVN2gGCZDBYWstLj70zgqSyad0fVWPXgJaClGUfB8KGXuG+rl1v3ab0euUOPv
+    jofAlmD/XG8GJBY5YAZCtMa9Ze5MagVZAGKX/FVE4eyMDZtqrdgAq+19zJlWEr/Na0TXjkTx4KLj
+    WzeKbyIjaAJE7aDYpa2tTSO+mvbCrBKo/ryate4Up9KfylnhjumhGEl0SCXzBjB1B9Q/QYhQulrH
+    /fcue6svl1di8BwFFnZKAGTE3mGIalGksliJxTZVqTmvLF6fXxksjhzpkwaqP5s3fMDBMYhRDAtA
+    hUAhcR3uL05YCxbclq7h1dNa+Nc+j4CFBrdN005oVlMN9yBlWeM4TlnrOhqX02j3
+# apache timeout for the proxy connection to jira, this is a large timeout as the setup wizard requires it
+vhost_http_atlassian_proxy_connection_timeout: 150
+vhost_http_atlassian_proxy_timeout: 300
+# hostname used to pass the setup wizard, will also be set as the jira base url
+atlassian_host_name: 'http://localhost'
+#JVM minimum memory setup for the service
+atlassian_jvm_minimum_memory: 256m
+#JVM maximum memory setup for the service
+atlassian_jvm_maximum_memory: 512m
+#JVM max perm size setup for the service
+atlassian_jvm_max_perm_size: 256m
+#the location of the mysql datbaase driver, it is downloaded as part of the example bootstrap
+atlassian_driver_location_path: '/var/opt/puppet/mysql-connector-java-5.1.22.jar'
+# the apache servername to set in the vhost
+vhost_http_atlassian_servername: 'hostname1'
+# the apache serveralias to set in the vhost
+vhost_http_atlassian_serveraliases: 'localhost'
+# the tomcat port that jira is running on
+connector_tomcat_port: '8081'
+

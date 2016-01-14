@@ -1,0 +1,173 @@
+#!/usr/bin/env ruby 
+# Copyright 2015 Adaptavist.com Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+require 'avst-cloud'
+
+avst_cloud_base ="#{File.expand_path("../../", __FILE__)}"
+
+start_time = Time.now
+
+server_name = "hostname1"
+
+# FILL IN YOUR AWS ACCOUNT DETAILS (Access Key ID and Secret Access Key), GIT REPO AND MAKE SURE 
+# FILES IN files FOLDER HAS CORRECT CONTENT
+
+# Provide account specific values here
+provider_user=''
+provider_pass=''
+
+key_name           = 'admin' # key name, e.g. admin
+ssh_key            = "path/to/your/admin.pem" # Full path to ssh key, e.g. /tmp/admin.pem
+subnet_id          = '' # Your subnet
+security_group_ids = [''] # List of security groups
+
+region             = "eu-west-1"
+
+conn = AvstCloud::AwsConnection.new(provider_user, provider_pass, region)
+
+ebs_size           = 12
+availability_zone  = "eu-west-1c"
+flavour            = "t2.small"
+
+# os specific, on aws ubuntu - '/dev/sda1', centos - '/dev/xvda'
+# hdd_device_path    = nil # defaults to '/dev/sda1'
+# ami_image_id       = "ami-f0b11187"
+# os                 = "ubuntu-14"
+# access_user        = 'ubuntu'
+
+hdd_device_path    = '/dev/xvda' # defaults to '/dev/sda1'
+ami_image_id       = "ami-7a40920d"
+os                 = "centos-7"
+access_user        = 'ec2-user'
+
+puts "Starting server".green
+
+server = conn.create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone)
+# server = conn.server(server_name, nil, ssh_key, os)
+# server.destroy
+# exit
+# # Ubuntu 14 pre upload commands
+# pre_upload_commands = [
+#    "echo 'pre_upload_command was here' >> /tmp/pre_upload",
+#    "apt-get clean",
+#    "apt-get update",
+#    "apt-get upgrade -o Dpkg::Options::='--force-confold' --force-overwrite -f -y",
+#    "apt-get install -o Dpkg::Options::='--force-confold' --force-overwrite -f -y curl",
+#    "curl -sSL https://raw.github.com/adaptavist/rvm/adaptavist_rvm/binscripts/rvm-installer | bash -s -- --version 1.25.33",
+#    "source /usr/local/rvm/scripts/rvm; rvm install 2.0",
+#    "echo 'gem: --no-ri --no-rdoc' > ~/.gemrc",
+#    "apt-get install -o Dpkg::Options::='--force-confold' -f -y git puppet-common puppet augeas-tools libaugeas-dev libaugeas-ruby unzip",
+#    "source /usr/local/rvm/scripts/rvm; gem install --no-ri --no-rdoc puppet -v 3.7.5",
+#    "source /usr/local/rvm/scripts/rvm; gem install --no-ri --no-rdoc r10k ruby-augeas hiera-eyaml hiera-fragment ruby-shadow",
+#    "echo #{server_name} > /etc/hostname; sed -i 's/ubuntu/#{server_name}/g' /etc/hosts; sed -i '/127.0.1.1/d' /etc/hosts; echo '127.0.1.1 #{server_name}' >> /etc/hosts; service hostname restart",
+#    "source /usr/local/rvm/scripts/rvm; gem install --no-ri --no-rdoc puppet-runner",
+#    "mkdir /home/#{access_user}/.ssh",
+#    "mkdir /var/opt/puppet/secrets/keys"
+#]
+
+# CentOS 7 pre upload commands
+pre_upload_commands = [
+    # clean all the YUM metadata
+    "yum clean all",
+    # update all packages already installed
+    "yum -y update",
+    # install rvm
+    "curl -sSL https://raw.github.com/adaptavist/rvm/adaptavist_rvm/binscripts/rvm-installer | bash -s -- --version 1.25.33",
+    # install ruby 2.0 via rvm
+    "source /usr/local/rvm/scripts/rvm; rvm install 2.0",
+    # add defaults to ~/.gemrc
+    "echo 'gem: --no-ri --no-rdoc' > ~/.gemrc",
+    # install curl, git, puppet-common, puppet, augeas-devel, augeas and unzip
+    "yum install -y curl git puppet-common puppet augeas-devel augeas unzip",
+    # install puppet 3.7.5 gem
+    "source /usr/local/rvm/scripts/rvm; gem install --no-ri --no-rdoc puppet -v 3.7.5",
+    # install r10k, ruby-augeas, hiera-eyaml, hiera-fragment and ruby-shadow gem
+    "source /usr/local/rvm/scripts/rvm; gem install --no-ri --no-rdoc r10k ruby-augeas hiera-eyaml hiera-fragment ruby-shadow",
+    # set the servers hostname
+    "echo 'HOSTNAME=#{server_name}' >> /etc/sysconfig/network; sed -i '/127.0.1.1/d' /etc/hosts; echo '127.0.1.1 #{server_name}' >> /etc/hosts; hostname #{server_name};",
+    "if [ ! -f /usr/bin/hostnamectl ]; then  /etc/init.d/network restart; else /usr/bin/hostnamectl set-hostname #{server_name}; fi",
+    # workaround for issues resizing the root flesystem if its xfs
+    "mount -t xfs | egrep ' / '.*.inode64 > /dev/null 2>&1 && (mount -o remount,inode32 /;mount -o remount,inode64 /)",
+    # download and install oracle java 7 and 8, alternatives will be configured by the oracle_java puppet module
+    "curl -L -b 'oraclelicense=a' http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-linux-x64.rpm -o /tmp/jdk-8u65-linux-x64.rpm",
+    "curl -L -b 'oraclelicense=a' http://download.oracle.com/otn-pub/java/jdk/7u79-b15/jdk-7u79-linux-x64.rpm -o /tmp/jdk-7u79-linux-x64.rpm",
+    "rpm -i /tmp/jdk-8u65-linux-x64.rpm",
+    "rpm -i /tmp/jdk-7u79-linux-x64.rpm",
+    # install puppet-runer gem
+    "source /usr/local/rvm/scripts/rvm; gem install --no-ri --no-rdoc puppet-runner",
+    # create the access users .ssh folder to allow the uploading of id_rsa and known_hosts
+    "mkdir /home/#{access_user}/.ssh",
+    # create the puppet secrets directory to allow the uploading of eyaml public and private keys
+    "mkdir -p /var/opt/puppet/secrets/keys",
+    # ensure the acces user owns the puppet directories
+    "chown -R #{access_user} /var/opt/puppet",
+]
+
+custom_file_uploads = {
+    "#{avst_cloud_base}/files/id_rsa" => "/home/#{access_user}/.ssh/.",
+    "#{avst_cloud_base}/files/known_hosts" => "/home/#{access_user}/.ssh/.",
+    "#{avst_cloud_base}/files/private_key.pkcs7.pem" => "/tmp/.",
+    "#{avst_cloud_base}/files/public_key.pkcs7.pem" => "/tmp/."
+}
+
+# Uploading ssh keys to access git repo in provisioning stage, make sure you provide correct keys
+# # Ubuntu 14 post upload commands
+# post_upload_commands = [
+#     "chmod 0600 /home/#{access_user}/.ssh/known_hosts",
+#     "chmod 0600 /home/#{access_user}/.ssh/id_rsa",
+#     "mkdir /var/opt/puppet",
+#     "chown ubuntu /var/opt/puppet",
+#     "apt-get update && apt-get install -o Dpkg::Options::='--force-confold' -f -y git puppet-common puppet"
+# ]
+
+# Centos 7 post upload commands
+post_upload_commands = [
+    "mv /tmp/private_key.pkcs7.pem /var/opt/puppet/secrets/keys/.",
+    "mv /tmp/public_key.pkcs7.pem /var/opt/puppet/secrets/keys/.",
+    # download the mysql jdbc driver
+    "curl -L http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.22/mysql-connector-java-5.1.22.jar -o /var/opt/puppet/mysql-connector-java-5.1.22.jar",
+    "chmod 0600 /home/#{access_user}.ssh/known_hosts",
+    "chmod 0600 /home/#{access_user}/.ssh/id_rsa",
+    # install the puppet and puppet-common packages via yum
+    "yum install -y git puppet-common puppet"
+]
+
+
+remote_server_debug = true
+debug_structured_log = false
+
+server.bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log)
+
+server_tmp_folder = "/tmp/avst_cloud_tmp_#{Time.now.to_i}"
+
+# url to git repo you want to upload to the server
+git = "https://github.com/Adaptavist/base_puppet_templates.git" # url to git repo
+branch = "master" # branch
+reference = nil # tag
+# In this example we are using puppet-runner to apply our puppet configs, check doco
+puppet_runner = "puppet-runner start"
+puppet_runner_prepare = "puppet-runner prepare -c ./hiera-configs -d ./hiera -f ./environments/production/modules/hosts/facts.d -t ./hiera-configs -r ./hiera-configs/puppetfile_dictionary.yaml -o ./Puppetfile -e /var/opt/puppet/secure/keys"
+
+custom_provisioning_commands = ["echo 'done' >> /tmp/done"]
+# defaults to /var/opt/puppet
+destination_folder = nil
+
+server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder)
+
+# Destroy server 
+# server.destroy
+
+time_taken = ((Time.now - start_time) / 60).round(2)
+puts "Finished in #{time_taken} minutes".green

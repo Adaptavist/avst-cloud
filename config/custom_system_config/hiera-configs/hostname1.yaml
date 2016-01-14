@@ -1,0 +1,12 @@
+---
+functionalities:
+  0_base_setup:
+    - example
+    - oracle_java
+  1_app:
+    - jira: "atlassian_"
+  2_database:
+    - mysql: "atlassian_"
+  3_webserver:
+    - apache_http_atlassian_redhat_7 
+
