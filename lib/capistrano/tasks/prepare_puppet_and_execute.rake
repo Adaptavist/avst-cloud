@@ -47,7 +47,6 @@ task :prepare_puppet_and_execute do
             puts "Done r10k puppetfile install"
 
             execute :clear_puppet
-            # execute :create_puppet_files
             execute :link_puppet
             execute :link_hiera
 
