@@ -178,7 +178,7 @@ module AvstCloud
             @branch = branch
             @server_tmp_folder = server_tmp_folder
             @reference = reference
-            @custom_provisioning_commands = custom_provisioning_commands
+            @custom_provisioning_commands = custom_provisioning_commands || {}
             @puppet_runner = puppet_runner
             @puppet_runner_prepare = puppet_runner_prepare
             @destination_folder = destination_folder || '/var/opt/puppet'
