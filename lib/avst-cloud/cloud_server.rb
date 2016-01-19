@@ -30,11 +30,12 @@ module AvstCloud
 
         def bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log)
             logger.debug "Bootstrapping #{server_name}...".green
+            run_tasks([AvstCloud::WaitUntilReady.new])
             disable_tty_task = AvstCloud::DisableRequireTty.new(@access_user)
             pre_upload_commands_tasks = AvstCloud::SshCommandTask.new(pre_upload_commands, remote_server_debug, debug_structured_log)
             custom_file_uploads_tasks = AvstCloud::ScpTask.new(custom_file_uploads)
             post_upload_commands_tasks = AvstCloud::SshCommandTask.new(post_upload_commands, remote_server_debug, debug_structured_log)
-            run_tasks([AvstCloud::WaitUntilReady.new, disable_tty_task, pre_upload_commands_tasks, custom_file_uploads_tasks, post_upload_commands_tasks])
+            run_tasks([disable_tty_task, pre_upload_commands_tasks, custom_file_uploads_tasks, post_upload_commands_tasks])
             logger.debug "Bootstrap done. You can connect to server as #{@access_user} on #{@ip_address}"
         end
 

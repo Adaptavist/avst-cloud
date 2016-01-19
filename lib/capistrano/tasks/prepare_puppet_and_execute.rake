@@ -20,8 +20,8 @@ task :prepare_puppet_and_execute do
             SSHKit.config.command_map[:link_puppet] = "sudo su -c 'ln -s /var/opt/puppet/current /etc/puppet'"
             SSHKit.config.command_map[:link_hiera] = "sudo su -c 'cd /etc && sudo rm -f hiera.yaml && sudo ln -sf /var/opt/puppet/current/hiera.yaml .'"
             SSHKit.config.command_map[:clear_puppet] = "sudo su -c 'rm -fr /etc/puppet'"
-            SSHKit.config.command_map[:create_puppet_files] = "sudo su -c 'mkdir /var/opt/puppet/current/files'"
-            SSHKit.config.command_map[:r10k] = "sudo su -c 'source /usr/local/rvm/scripts/rvm; r10k puppetfile install'"
+            SSHKit.config.command_map[:create_puppet_files] = "sudo su -c 'if [ ! -d /var/opt/puppet/current/files ]; then mkdir /var/opt/puppet/current/files; fi'"
+            SSHKit.config.command_map[:r10k] = "source /usr/local/rvm/scripts/rvm; r10k puppetfile install"
             SSHKit.config.command_map[:execute_puppet_runner] = "sudo su -c 'source /usr/local/rvm/scripts/rvm; #{ENV["puppet_runner"]}'"
 
             # create folder in /tmp to store custom configs, this will be deleted by clean command
@@ -47,7 +47,7 @@ task :prepare_puppet_and_execute do
             puts "Done r10k puppetfile install"
 
             execute :clear_puppet
-            execute :create_puppet_files
+            # execute :create_puppet_files
             execute :link_puppet
             execute :link_hiera
 
