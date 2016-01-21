@@ -22,9 +22,9 @@ avst_cloud_base="#{File.expand_path("../../", __FILE__)}"
 # FILES IN files FOLDER HAS CORRECT CONTENT
 provider_user=''
 provider_pass=''
-region="LON"
+region='eu-west-1'
 # Initiate connector object
-conn = AvstCloud::RackspaceConnection.new(provider_user, provider_pass, region)
+conn = AvstCloud::AwsConnection.new(provider_user, provider_pass, region)
 
 server_name        = 'hostname1'
 
