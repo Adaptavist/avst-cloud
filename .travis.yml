@@ -4,14 +4,14 @@ notifications:
   hipchat:
     rooms:
       secure: xTBeXHMoEwuo63qT4R37kgYgih6SXQb0h65SE2g7s/VqRr5kGAEpjCZvyX2lNvPEtM4TcyZXWMWOj76uw3pm5zfvR2ESrIv2gHm+H3GcI3cgjJ5vyEZTSz/PuYmzzL/SVL+/CtDzm/Yt5ZnabG9wn4JQ6ONzD2LbEtroazC4ERHjpaC7WvoIjfytwT6n2Vhwv3xig/Ghcw3keeQYSj5y1dmUMcaQmlNaJIt78Heo9kz7BNb/Q8Y/PEhm7Bv5Ix1rqzSrCBrTDhWaI1oVcY8FnBKDDdQsC2LidpDbHflkS8BMwESRI695jDzrUCYxtPSOJ9T+4Kd5wh4pmfLTvrp3w2ew90PbR2oXwpSvmNrj6HN12QUMX53ga+4ZChE2UlHrvqoKbqVDq6apztfGOmc5gnGDTz5B8xc+S+WJmqkP/qVwMwSWzmXPk1CuWOxDarWDzq104UNpZsuNrDpgb2WI5glWkUNveN6NpkDHtkmKxGIMPtHOyvqc6U6s0QbrbfbRUzOm/XpEDMpvLkl1FBj8N/HVsW2hISJxLeELssqaLzsk/DYhp3RkultPpqx65hqsNuIPcIadBtrtoRUEOOe8kE5Wf2XjSoVBHGk9WCvncn0yo0ZJbZU1qcELavnHVleY+gjDyLneW/bFrBAr5Th8lgtdd+Lll76p0xUINa/rTC8=
+    template:
+    - 'Gem - %{repository} #%{build_number} (%{build_url}) by %{author}: %{message}'
 rvm:
 - 2.0.0
 deploy:
   provider: rubygems
   api_key:
     secure: RiPkeHQ754HszIdlHOs955XTVnquIUZiIwd5hXFatTIw6dp0hBEKVILqkB5OzO2vo2rlPImiEb8KBHL33izEYyAIS9pKM8kGwAIef8Q/qFxzknVAJMPQVoLusApS3XQ2MZUe08ChBnaPrpUQxWFWKvMH3kuHC44QfQqaOnO/jQJ+kTlHXsSI2norcpQfhTGsoZL68w4oiuQ0me+dt0xf3tbgMaNYc3QoWdzQFZB6H9anGBKYzAjh5vs4JV4BA8oDnRgDMWG0x0OtHq4ViRcsNG+hqIFaHKNzKsDKaFL2Q13ThvtUz0CqSq6ZSakLFqxrFG7JgOu8rAuET3oUXue+Zq9SBYlHZoTGwMjYfcyPM/PVpTPdzY+MAHCDLXfNhrdN0Kq+zHAShqLOL9ttz+v2nkZxlpPJ9GKaf1r9sUn/njHd+A3w7MWcS49EpbKU8IAo3/mBB4Dozj20HiWdIaYRZY/gRqFCHHPto6UdsTmioB5O1ph9KthBJR2wydZagdT6Y1SwJkpNq2TJz2mPtNu1ikYS7YYq7WujYH7WgCm8kHhIAXnuW6LOWTsowvwjeCw+6UrzUXAeKiBcPg8WzArx1kOjV7Uw3JffpCRofSTBPH+lyLIFoTf06vYSUZ1yDs+a6bLM3orbmeOJYBKgQCC9QBHzz0LDCugQlZ69H5HRCGE=
-  template:
-    - 'Gem - %{repository} #%{build_number} (%{build_url}) by %{author}: %{message}'
   gem: avst-cloud
   on:
     tags: true
