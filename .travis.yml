@@ -10,6 +10,8 @@ deploy:
   provider: rubygems
   api_key:
     secure: RiPkeHQ754HszIdlHOs955XTVnquIUZiIwd5hXFatTIw6dp0hBEKVILqkB5OzO2vo2rlPImiEb8KBHL33izEYyAIS9pKM8kGwAIef8Q/qFxzknVAJMPQVoLusApS3XQ2MZUe08ChBnaPrpUQxWFWKvMH3kuHC44QfQqaOnO/jQJ+kTlHXsSI2norcpQfhTGsoZL68w4oiuQ0me+dt0xf3tbgMaNYc3QoWdzQFZB6H9anGBKYzAjh5vs4JV4BA8oDnRgDMWG0x0OtHq4ViRcsNG+hqIFaHKNzKsDKaFL2Q13ThvtUz0CqSq6ZSakLFqxrFG7JgOu8rAuET3oUXue+Zq9SBYlHZoTGwMjYfcyPM/PVpTPdzY+MAHCDLXfNhrdN0Kq+zHAShqLOL9ttz+v2nkZxlpPJ9GKaf1r9sUn/njHd+A3w7MWcS49EpbKU8IAo3/mBB4Dozj20HiWdIaYRZY/gRqFCHHPto6UdsTmioB5O1ph9KthBJR2wydZagdT6Y1SwJkpNq2TJz2mPtNu1ikYS7YYq7WujYH7WgCm8kHhIAXnuW6LOWTsowvwjeCw+6UrzUXAeKiBcPg8WzArx1kOjV7Uw3JffpCRofSTBPH+lyLIFoTf06vYSUZ1yDs+a6bLM3orbmeOJYBKgQCC9QBHzz0LDCugQlZ69H5HRCGE=
+    template:
+    - 'Gem - %{repository} #%{build_number} (%{build_url}) by %{author}: %{message}'
   gem: avst-cloud
   on:
     tags: true
