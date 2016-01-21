@@ -63,6 +63,15 @@ module AvstCloud
             @server.state
         end
 
+        def wait_for_state(&cond)
+            logger.debug "Waiting for state change...".yellow
+            @server.wait_for(600, 5) do
+                print "."
+                STDOUT.flush
+                cond.call(self)
+            end
+        end
+
         # Abstract classes to be implemented per provider
         UNIMPLEMENTED="Unimplemented..."
         def stop

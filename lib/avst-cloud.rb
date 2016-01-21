@@ -14,6 +14,8 @@
 
 require_relative './avst-cloud/aws_connection.rb'
 require_relative './avst-cloud/aws_server.rb'
+require_relative './avst-cloud/rackspace_connection.rb'
+require_relative './avst-cloud/rackspace_server.rb'
 require_relative './avst-cloud/logging.rb'
 require 'fog'
 require 'net/ssh'
