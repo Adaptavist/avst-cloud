@@ -15,24 +15,28 @@
 require_relative './cloud_server.rb'
 
 module AvstCloud
-    class AwsServer < AvstCloud::CloudServer
+    class RackspaceServer < AvstCloud::CloudServer
 
         def stop
             if @server
                 logger.debug "Stopping #{@server_name}"
-                @server.stop
-                wait_for_state() {|serv| serv.state == 'stopped'}
+
+                shutdown_command = AvstCloud::SshCommandTask.new(['shutdown -h now'])
+                run_tasks([AvstCloud::WaitUntilReady.new, shutdown_command])
+                logger.debug "Waiting for SHUTOFF state..."
+                wait_for_state() {|serv| serv.state == 'SHUTOFF'}
                 logger.debug "[DONE]\n\n"
                 logger.debug "Server #{@server_name} stopped...".green
             else
                 raise "Server #{@server_name} does not exist!".red
             end
         end
-
+        
         def start
             if @server
                 logger.debug "Starting #{@server_name}"
-                @server.start
+                @server.reboot 'HARD'
+                logger.debug "Waiting for ACTIVE state..."
                 wait_for_state() {|serv| serv.ready?}
                 logger.debug "[DONE]\n\n"
                 logger.debug "Server #{@server_name} started...".green
@@ -45,12 +49,10 @@ module AvstCloud
             if @server
                 logger.debug "Killing #{@server_name}"
                 @server.destroy
-                wait_for_state() {|serv| serv.state == 'terminated'}
                 logger.debug "Server #{@server_name} destroyed...".green
             else
                 raise "Server #{@server_name} does not exist!".red
             end
         end
-
     end
 end

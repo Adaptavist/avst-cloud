@@ -67,7 +67,7 @@ module AvstCloud
                 server = restartable_servers.first
                 server.start
                 result_server = AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, ssh_key)
-                result_server.wait_for_state(server, 'ready') {|serv| serv.ready?}
+                result_server.wait_for_state() {|serv| serv.ready?}
                 logger.debug "[DONE]\n\n"
                 logger.debug "The server was successfully re-started.\n\n"
                 result_server
@@ -116,7 +116,7 @@ module AvstCloud
                 # result_server.logger = logger
                 # Check every 5 seconds to see if server is in the active state (ready?).
                 # If the server has not been built in 5 minutes (600 seconds) an exception will be raised.
-                result_server.wait_for_state(server, 'ready') {|serv| serv.ready?}
+                result_server.wait_for_state() {|serv| serv.ready?}
 
                 logger.debug "[DONE]\n\n"
 

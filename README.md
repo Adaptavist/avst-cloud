@@ -1,6 +1,6 @@
 # avst-cloud gem
 
-Automated creation, bootstrapping and provisioning of servers. Currently supports AWS
+Automated creation, bootstrapping and provisioning of servers. Currently supports AWS and Rackspace
 
 ## Prerequisites
 Make sure ruby 2.0 is installed.
@@ -47,6 +47,26 @@ The application depends on several gems listed in avst-cloud.gemspec file. Bundl
     # Returns setver status
     server.status
 
+
+```
+
+### Rackspace
+
+```
+
+    conn = AvstCloud::RackspaceConnection.new(provider_user, provider_pass, region)
+    # image_id - int representing rackspace image id e.g. '4' - "2GB-standard"
+    server = conn.create_server(server_name, image_id)
+    
+    # Returns setver status
+    server.status
+
+    # Stop server
+    server.stop
+
+    # Destroy server 
+    server.destroy
+    
 
 ```
 

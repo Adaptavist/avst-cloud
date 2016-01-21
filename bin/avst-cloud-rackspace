@@ -18,34 +18,22 @@ require 'avst-cloud'
 
 avst_cloud_base="#{File.expand_path("../../", __FILE__)}"
 
-# FILL IN YOUR AWS ACCOUNT DETAILS (Access Key ID and Secret Access Key), GIT REPO AND MAKE SURE 
+# FILL IN YOUR Rackspace ACCOUNT DETAILS (Username and Secret Access Key), GIT REPO, image_id AND MAKE SURE 
 # FILES IN files FOLDER HAS CORRECT CONTENT
 provider_user=''
 provider_pass=''
-region='eu-west-1'
+region=:lon
 # Initiate connector object
-conn = AvstCloud::AwsConnection.new(provider_user, provider_pass, region)
+conn = AvstCloud::RackspaceConnection.new(provider_user, provider_pass, region)
 
 server_name        = 'hostname1'
 
-flavour            = nil # defaults to t2.micro
-hdd_device_path    = nil # defaults to '/dev/sda1'
-ami_image_id       = "ami-f0b11187"
-os                 = "ubuntu-14"
+flavour            = '4'
+image_id           = '' # Please provide
+server = conn.create_server(server_name, image_id)
 
-key_name           = 'admin' # key name, e.g. admin
-ssh_key            = "path/to/your/admin.pem" # Full path to ssh key, e.g. /tmp/admin.pem
-subnet_id          = '' # Your subnet
-security_group_ids = [''] # List of security groups
-ebs_size           = nil # In GB
-availability_zone  = 'eu-west-1c'
-
-server = conn.create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone)
-
-# server = conn.server(server_name, nil, ssh_key, os)
-# server.destroy
-# puts conn.server_status(server_name)
-# exit
+puts conn.server_status(server_name)
+# server = conn.server(server_name, 'root', pass)
 
 pre_upload_commands = [
     "echo 'pre_upload_command was here' >> /tmp/pre_upload",
@@ -58,13 +46,13 @@ custom_file_uploads = {
 
 # Uploading ssh keys to access git repo in provisioning stage, make sure you provide correct keys
 post_upload_commands = [
-    "mkdir /home/ubuntu/.ssh",
-    "mv /tmp/id_rsa /home/ubuntu/.ssh/.",
-    "mv /tmp/known_hosts /home/ubuntu/.ssh/.",
-    "chmod 0600 /home/ubuntu/.ssh/known_hosts",
-    "chmod 0600 /home/ubuntu/.ssh/id_rsa",
+    "mkdir /root/.ssh",
+    "mv /tmp/id_rsa /root/.ssh/.",
+    "mv /tmp/known_hosts /root/.ssh/.",
+    "chmod 0600 /root/.ssh/known_hosts",
+    "chmod 0600 /root/.ssh/id_rsa",
     "mkdir /var/opt/puppet",
-    "chown ubuntu /var/opt/puppet",
+    "chown root /var/opt/puppet",
     "apt-get update && apt-get install -o Dpkg::Options::='--force-confold' -f -y git puppet-common puppet"
 ]
 

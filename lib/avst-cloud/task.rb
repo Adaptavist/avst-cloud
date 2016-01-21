@@ -44,8 +44,28 @@ module AvstCloud
             end
 
             logger.debug "Using #{server.access_user}@#{server.ip_address} with #{server.access_password} to perform ssh task."
-            Net::SSH.start(server.ip_address, server.access_user, :password => server.access_password, :keys => [server.access_password]) do |session|
-                ssh_command session
+            attempts = 1
+            success = false
+            max_attempts = 50
+            while attempts < max_attempts and !success
+                begin
+                    Net::SSH.start(server.ip_address, server.access_user, :password => server.access_password, :keys => [server.access_password]) do |session|
+                        ssh_command session
+                    end
+                    success = true
+                rescue Errno::ECONNREFUSED
+                    logger.debug "Connection refused. Server may not have booted yet. Sleeping #{attempts}/#{max_attempts}"
+                    sleep(10)
+                    attempts=attempts+1
+                rescue Errno::ETIMEDOUT
+                    logger.debug "Connection timed out. Server may not have booted yet. Sleeping #{attempts}/#{max_attempts}"
+                    sleep(10)
+                    attempts=attempts+1
+                end
+            end
+            unless success
+                logger.error 'Bootstrapping: failed to find server to connect to'
+                raise 'Bootstrapping: failed to find server to connect to'
             end
         end
 
@@ -122,45 +142,25 @@ module AvstCloud
         include Logging
 
         def ssh_command(session)
-            attempts = 1
-            success = false
-            max_attempts = 50
-            while attempts < max_attempts and !success
-                begin
-                    session.open_channel do |channel|
-                        channel.request_pty do |ch, success|
-                            raise 'Error requesting pty' unless success
+            session.open_channel do |channel|
+                channel.request_pty do |ch, success|
+                    raise 'Error requesting pty' unless success
 
-                            ch.send_channel_request("shell") do |ch, success|
-                                raise 'Error opening shell' unless success
-                            end
-                        end
-                        channel.on_data do |ch, data|
-                            if @debug
-                                STDOUT.print data
-                            end
-                        end
-                        channel.on_extended_data do |ch, type, data|
-                            STDOUT.print "Error: #{data}\n"
-                        end
-                        channel.send_data("echo \"ready\"\n")
-                        channel.send_data("exit\n")
-                        session.loop
+                    ch.send_channel_request("shell") do |ch, success|
+                        raise 'Error opening shell' unless success
                     end
-                    success = true
-                rescue Errno::ECONNREFUSED
-                    logger.debug "Connection refused. Server may not have booted yet. Sleeping #{attempts}/#{max_attempts}"
-                    sleep(10)
-                    attempts=attempts+1
-                rescue Errno::ETIMEDOUT
-                    logger.debug "Connection timed out. Server may not have booted yet. Sleeping #{attempts}/#{max_attempts}"
-                    sleep(10)
-                    attempts=attempts+1
                 end
-            end
-            unless success
-                logger.error 'Bootstrapping: failed to find server to connect to'
-                raise 'Bootstrapping: failed to find server to connect to'
+                channel.on_data do |ch, data|
+                    if @debug
+                        STDOUT.print data
+                    end
+                end
+                channel.on_extended_data do |ch, type, data|
+                    STDOUT.print "Error: #{data}\n"
+                end
+                channel.send_data("echo \"ready\"\n")
+                channel.send_data("exit\n")
+                session.loop
             end
         end
     end
