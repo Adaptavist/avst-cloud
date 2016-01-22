@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
     spec.authors       = ["Martin Brehovsky", "Jon Bevan", "Matthew Hope"]
     spec.email         = ["mbrehovsky@adaptavist.com", "jbevan@adaptavist.com", "mhope@adaptavist.com"]
     spec.summary       = %q{Automated creation, bootstrapping and provisioning of servers }
-    spec.description   = %q{Currently supports AWS}
+    spec.description   = %q{Automated creation, bootstrapping and provisioning of servers}
     spec.homepage      = "http://www.adaptavist.com"
 
     spec.files         = `git ls-files -z`.split("\x0")
