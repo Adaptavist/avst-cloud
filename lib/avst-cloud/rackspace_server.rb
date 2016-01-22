@@ -20,9 +20,15 @@ module AvstCloud
         def stop
             if @server
                 logger.debug "Stopping #{@server_name}"
-
                 shutdown_command = AvstCloud::SshCommandTask.new(['shutdown -h now'])
-                run_tasks([AvstCloud::WaitUntilReady.new, shutdown_command])
+                begin
+                    run_tasks([AvstCloud::WaitUntilReady.new, shutdown_command])
+                rescue IOError => e
+                    logger.debug "Connection closed #{e.message}"
+                    unless e.message == "closed stream"
+                        raise "Error while shutting down server. Expected Connection closed. Got #{e.message}"
+                    end
+                end
                 logger.debug "Waiting for SHUTOFF state..."
                 wait_for_state() {|serv| serv.state == 'SHUTOFF'}
                 logger.debug "[DONE]\n\n"
