@@ -35,6 +35,7 @@ The application depends on several gems listed in avst-cloud.gemspec file. Bundl
     # ebs_size - disk size
     # hdd_device_path - hdd device path, may differ per ami/os
     # availability_zone - aws availability zone
+    # vpc - virtual private cloud, defaults to nil, make sure you adjust subned_id and security_group_ids accordingly when setting this option
 
     server = conn.create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone)
     
