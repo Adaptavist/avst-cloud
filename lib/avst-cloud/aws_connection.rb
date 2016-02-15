@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone)
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, vpc=nil)
 
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
@@ -85,6 +85,7 @@ module AvstCloud
                 logger.debug "availability_zone  - #{availability_zone}"
                 logger.debug "ebs_size           - #{ebs_size}"
                 logger.debug "hdd_device_path    - #{device_name}"
+                logger.debug "vpc                - #{vpc}"
 
                 create_ebs_volume = nil
                 if ebs_size
@@ -110,7 +111,9 @@ module AvstCloud
                                                 :associate_public_ip => true,
                                                 :security_group_ids => security_group_ids,
                                                 :availability_zone => availability_zone,
-                                                :block_device_mapping => create_ebs_volume
+                                                :block_device_mapping => create_ebs_volume,
+                                                :vpc => vpc
+
                 
                 result_server = AvstCloud::AwsServer.new(server, server_name, nil, root_user, ssh_key)
                 # result_server.logger = logger
