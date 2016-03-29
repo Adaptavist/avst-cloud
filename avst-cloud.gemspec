@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
     spec.name          = "avst-cloud"
-    spec.version       = '0.1.11'
+    spec.version       = '0.1.12'
     spec.authors       = ["Martin Brehovsky", "Jon Bevan", "Matthew Hope"]
     spec.email         = ["mbrehovsky@adaptavist.com", "jbevan@adaptavist.com", "mhope@adaptavist.com"]
     spec.summary       = %q{Automated creation, bootstrapping and provisioning of servers }
@@ -21,6 +21,8 @@ Gem::Specification.new do |spec|
     spec.add_dependency "fog"
     spec.add_dependency "capistrano", "3.2.1"
     spec.add_dependency "capistrano-rvm"
+    spec.add_dependency "net-ssh", "3.0.2"
+    spec.add_dependency "sshkit", "1.8.1"
     spec.add_dependency "derelict"
     spec.add_dependency "docopt", ">= 0.5.0"
     spec.add_dependency "colorize", ">= 0.7.3"
