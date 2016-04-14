@@ -1,6 +1,6 @@
 # avst-cloud gem
 
-Automated creation, bootstrapping and provisioning of servers. Currently supports AWS and Rackspace
+Automated creation, bootstrapping and provisioning of servers. Currently supports AWS, Azure and Rackspace
 
 ## Prerequisites
 Make sure ruby 2.0 is installed.
@@ -70,6 +70,10 @@ The application depends on several gems listed in avst-cloud.gemspec file. Bundl
     
 
 ```
+
+### Azure
+
+See bin/avst-cloud-azure for examples
 
 ## Connecting to existing server
 

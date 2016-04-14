@@ -1,0 +1,97 @@
+#!/usr/bin/env ruby 
+
+# Copyright 2015 Adaptavist.com Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+require 'avst-cloud'
+
+avst_cloud_base="#{File.expand_path("../../", __FILE__)}"
+
+# FILL IN YOUR AZURE ACCOUNT DETAILS (Subscription ID and Private Key uploaded to Management Certificates)
+provider_user=''
+provider_pass=''
+
+# Initiate connector object
+conn = AvstCloud::AzureConnection.new(provider_user, provider_pass)
+server_name = "hostname"
+# all vars have default values, see azure_connection.rb 
+user = nil
+private_key_file = nil
+location = nil 
+image_id = "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_4-LTS-amd64-server-20160406-en-us-30GB" 
+# https://azure.microsoft.com/en-us/documentation/articles/cloud-services-sizes-specs/
+instance_type = nil
+storage_account_name = nil
+
+conn.list_known_servers
+server = conn.create_server(server_name, user, private_key_file, location, image_id, instance_type, storage_account_name)
+# fog_server = conn.find_fog_server(server_name)
+# server = AvstCloud::AzureServer.new(fog_server, server_name, nil, user, private_key_file)
+# server.stop
+# server.start
+# server.destroy
+# conn.list_storage_accounts
+conn.list_known_servers
+
+pre_upload_commands = [
+    "echo 'pre_upload_command was here' >> /tmp/pre_upload",
+]
+
+custom_file_uploads = {
+    "#{avst_cloud_base}/files/id_rsa" => "/tmp/.",
+    "#{avst_cloud_base}/files/known_hosts" => "/tmp/."
+}
+
+# Uploading ssh keys to access git repo in provisioning stage, make sure you provide correct keys
+post_upload_commands = [
+    # "mkdir /home/azureuser/.ssh",
+    # "mv /tmp/id_rsa /home/azureuser/.ssh/.",
+    # "mv /tmp/known_hosts /home/azureuser/.ssh/.",
+    # "chmod 0600 /home/azureuser/.ssh/known_hosts",
+    # "chmod 0600 /home/azureuser/.ssh/id_rsa",
+    # "mkdir /var/opt/puppet",
+    # "chown azureuser /var/opt/puppet",
+    "apt-get update && apt-get install -o Dpkg::Options::='--force-confold' -f -y git puppet-common puppet",
+    "echo 'post_upload_command was here' >> /tmp/post_upload"
+]
+
+remote_server_debug = true
+debug_structured_log = false
+
+server.bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log)
+
+git = "ssh://git@you_repo.git"
+branch = "master" 
+reference = nil # Tag
+# In this example we do not use puppet-runner, check doco
+puppet_runner = nil
+puppet_runner_prepare = nil
+custom_provisioning_commands = ["echo 'done' >> /tmp/done", "echo 'done' >> /tmp/done1"]
+server_tmp_folder="/tmp/avst_cloud_tmp_#{Time.now.to_i}"
+
+destination_folder = nil # defaults to /var/opt/puppet
+# server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder)
+
+# puts conn.server_status(server_name)
+# server.stop
+
+# puts conn.server_status(server_name)
+# server.start
+
+# custom_commands=nil
+# server_tmp_folder="/tmp/done"
+# server.post_provisioning_cleanup(custom_commands, os, remote_server_debug, server_tmp_folder)
+
+# server.destroy
+# puts conn.server_status(server_name)
