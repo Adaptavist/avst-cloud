@@ -56,7 +56,7 @@ module AvstCloud
                 logger.debug "The server was successfully re-started.\n\n"
                 result_server
             else
-                logger.debug "Creating EC2 server:"
+                logger.debug "Creating Azure server:"
                 logger.debug "Server name          - #{server_name}"
                 logger.debug "location             - #{location}"
                 logger.debug "storage_account_name - #{storage_account_name}"
