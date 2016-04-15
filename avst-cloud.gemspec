@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency "rake"
     spec.add_dependency "fog"
     spec.add_dependency "fog-azure"
+    spec.add_dependency "azure"
     spec.add_dependency "capistrano", "3.2.1"
     spec.add_dependency "capistrano-rvm"
     spec.add_dependency "net-ssh", "3.0.2"
