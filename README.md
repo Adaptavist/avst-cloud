@@ -75,6 +75,10 @@ The application depends on several gems listed in avst-cloud.gemspec file. Bundl
 
 See bin/avst-cloud-azure for examples
 
+### Azure RM
+
+Using new Azure Resource Manager way to manage resources. See bin/avst-cloud-azure-rm for examples
+
 ## Connecting to existing server
 
 ```

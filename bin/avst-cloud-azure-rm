@@ -1,0 +1,136 @@
+#!/usr/bin/env ruby 
+
+# Copyright 2015 Adaptavist.com Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+require 'avst-cloud'
+require 'avst-cloud/azure_rm_connection'
+require 'avst-cloud/azure_rm_server'
+avst_cloud_base="#{File.expand_path("../../", __FILE__)}"
+
+# FILL IN YOUR AZURE ACCOUNT DETAILS
+# See https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/
+client_id = "" # Client ID:
+client_secret = "" # 2 Year Key: ...
+tenant_id = ""  # Tenant ID: ...
+subscription_id = "" # Subscription ID
+
+# Initiate connector object
+puts "Connection"
+
+conn = AvstCloud::AzureRmConnection.new(client_id, client_secret, tenant_id, subscription_id)
+# Lets create new Ubuntu 14 virtual machine 
+publisher = 'Canonical'
+offer = 'UbuntuServer'
+sku = '14.04.2-LTS'
+version = 'latest'
+
+server_name = "hostname1"
+user = "ubuntu"
+# Must comply to Azure pass guidelines
+password = "superSecretUbuntuPass111_@" 
+location = nil # Will default to West Europe
+resource_group = "new_resource_group" # if RG does not exists it will create it
+vm_size = nil # Defaults to Basic_A0
+storage_account_name = "new_storage_account" # creates it if not there
+network_interface_name = "new_network_interface" # creates it if not there, see defaults in azure_rm_connection
+virtual_network_name = "new_virtual_network" # creates it if not there, see defaults in azure_rm_connection
+subnet_name = nil # by default one gets created for new new network, if there is one we use it if more or none it fails 
+ip_configuration_name = "new_ip_config" # creates it if not there, see defaults in azure_rm_connection
+private_ip_allocation_method = "Dynamic"
+public_ip_allocation_method = "Static"
+subnet_address_list = nil
+dns_list = nil
+network_address_list = nil
+address_prefix  = nil
+use_public_ip = true # will return public ip, if set to false, private will be used by bootstrap
+serv = conn.create_server(server_name, 
+            user, 
+            password,
+            publisher,
+            offer,
+            sku,
+            version, 
+            location, 
+            resource_group, 
+            vm_size, 
+            storage_account_name, 
+            network_interface_name, 
+            virtual_network_name, 
+            subnet_name, 
+            ip_configuration_name, 
+            private_ip_allocation_method,
+            public_ip_allocation_method, 
+            subnet_address_list, 
+            dns_list, 
+            network_address_list, 
+            address_prefix,
+            use_public_ip)
+
+# serv = conn.server(server_name, resource_group ,user, password)
+# puts serv.inspect
+# serv.stop
+# puts serv.inspect
+# serv.start
+# puts serv.inspect
+# serv.destroy
+# puts serv.inspect
+
+pre_upload_commands = [
+    "echo 'pre_upload_command was here' >> /tmp/pre_upload",
+]
+
+custom_file_uploads = {
+    "#{avst_cloud_base}/files/id_rsa" => "/tmp/.",
+    "#{avst_cloud_base}/files/known_hosts" => "/tmp/."
+}
+
+# Uploading ssh keys to access git repo in provisioning stage, make sure you provide correct keys
+post_upload_commands = [
+    # "mkdir /home/#{user}/.ssh",
+    # "mv /tmp/id_rsa /home/#{user}/.ssh/.",
+    # "mv /tmp/known_hosts /home/#{user}/.ssh/.",
+    # "chmod 0600 /home/#{user}/.ssh/known_hosts",
+    # "chmod 0600 /home/#{user}/.ssh/id_rsa",
+    # "mkdir /var/opt/puppet",
+    # "chown #{user} /var/opt/puppet",
+    "apt-get update && apt-get install -o Dpkg::Options::='--force-confold' -f -y git puppet-common puppet",
+    "echo 'post_upload_command was here' >> /tmp/post_upload"
+]
+
+remote_server_debug = true
+debug_structured_log = false
+
+serv.bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log)
+
+git = "ssh://git@you_repo.git"
+branch = "master" 
+reference = nil # Tag
+# In this example we do not use puppet-runner, check doco
+puppet_runner = nil
+puppet_runner_prepare = nil
+custom_provisioning_commands = ["echo 'done' >> /tmp/done", "echo 'done' >> /tmp/done1"]
+server_tmp_folder="/tmp/avst_cloud_tmp_#{Time.now.to_i}"
+
+destination_folder = nil # defaults to /var/opt/puppet
+serv.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder)
+
+# serv.stop
+# serv.start
+
+custom_commands=nil
+server_tmp_folder="/tmp/done"
+serv.post_provisioning_cleanup(custom_commands, os, remote_server_debug, server_tmp_folder)
+# serv.destroy
+

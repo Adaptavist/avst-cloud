@@ -14,6 +14,8 @@
 # limitations under the License.
 
 require 'avst-cloud'
+require 'avst-cloud/aws_connection'
+require 'avst-cloud/aws_server'
 
 avst_cloud_base ="#{File.expand_path("../../", __FILE__)}"
 
