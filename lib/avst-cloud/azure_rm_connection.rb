@@ -315,7 +315,7 @@ module AvstCloud
             unless vnet
                 logger.debug "Virtual network #{virtual_network_name} not found, creating new one"
                 subnet_address_list = subnet_address_list || '10.1.0.0/24'
-                dns_list = dns_list || '10.1.0.5,10.1.0.6'
+                dns_list = dns_list || '8.8.8.8,8.8.4.4,10.1.0.5,10.1.0.6'
                 network_address_list = network_address_list || '10.1.0.0/16,10.2.0.0/16'
                 vnet = connect_to_networks.virtual_networks.create(
                     name: virtual_network_name,

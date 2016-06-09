@@ -88,14 +88,14 @@ module AvstCloud
                 start_time = Time.now
 
                 session.exec!("sudo su -c \"#{cmd}\"") do |ch, stream, data|
-                    if @debug
+                    # if @debug
                         logger.debug "Got this on the #{stream} stream: "
                         if @structured_log && logger.methods.include?(:log_structured_code)
                             logger.log_structured_code(data)
                         else
                             logger.debug(data)
                         end
-                    end
+                    # end
                 end
                 total_time = Time.now - start_time
                 logger.debug("Completed in #{total_time} seconds")
@@ -105,32 +105,50 @@ module AvstCloud
 
     # In case Requiretty is set in sudoers disable it for bootstrapping and provisioning
     # for user that performs it
+    # In case user does not have sudo no pass, enable it for bootstrapping and provisioning
     class DisableRequireTty < AvstCloud::SshTask
         include Logging
-        def initialize(for_user)
+        def initialize(for_user, pass, enable_passwordless_sudo=false)
             @for_user = for_user
+            @user_password = pass
+            @enable_passwordless_sudo = enable_passwordless_sudo
         end
         def ssh_command(session)
+            commands = []
+            if @enable_passwordless_sudo
+                commands << "sudo su -c 'echo \"#{@for_user} ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/zzz_#{@for_user}'"
+                redirect_type = ">>"
+            else
+                redirect_type = ">"
+            end
+
+            commands << "sudo su -c 'echo \"Defaults:#{@for_user} !requiretty\" #{redirect_type} /etc/sudoers.d/zzz_#{@for_user}'"
+            
             session.open_channel do |channel|
                 channel.request_pty do |ch, success|
                     raise 'Error requesting pty' unless success
+                end
+                channel.exec(commands.join(';')) do |ch, success|
+                    abort "Could not execute commands!" unless success
 
-                    ch.send_channel_request('shell') do |ch, success|
-                        raise 'Error opening shell' unless success
+                    channel.on_data do |ch, data|
+                        if @debug
+                            STDOUT.print  "#{data}"
+                        end
+                        channel.send_data "#{@user_password}\n" if data =~ /password/
+                    end
+                    channel.on_extended_data do |ch, type, data|
+                        STDOUT.print "stderr: #{data}"
+                    end
+
+                    channel.on_close do |ch|
+                        if @debug
+                            STDOUT.print "Channel is closing!"
+                        end
                     end
                 end
-                channel.on_data do |ch, data|
-                    if @debug
-                        STDOUT.print data
-                    end
-                end
-                channel.on_extended_data do |ch, type, data|
-                    STDOUT.print "Error: #{data}\n"
-                end
-                channel.send_data("sudo su -c 'echo 'Defaults:#{@for_user}\\ \\!requiretty' >> /etc/sudoers'\n")
-                channel.send_data("exit\n")
-                session.loop
             end
+            session.loop
         end
     end
 
