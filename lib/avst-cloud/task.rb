@@ -88,14 +88,14 @@ module AvstCloud
                 start_time = Time.now
 
                 session.exec!("sudo su -c \"#{cmd}\"") do |ch, stream, data|
-                    # if @debug
+                    if @debug
                         logger.debug "Got this on the #{stream} stream: "
                         if @structured_log && logger.methods.include?(:log_structured_code)
                             logger.log_structured_code(data)
                         else
                             logger.debug(data)
                         end
-                    # end
+                    end
                 end
                 total_time = Time.now - start_time
                 logger.debug("Completed in #{total_time} seconds")

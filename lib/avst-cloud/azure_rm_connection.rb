@@ -173,6 +173,7 @@ module AvstCloud
                     resource_group: resource_group,
                     location: location,
                     subnet_id: "/subscriptions/#{@subscription_id}/resourceGroups/#{resource_group}/providers/Microsoft.Network/virtualNetworks/#{virtual_network_name}/subnets/#{subnet_name}",
+                    public_ip_address_id: "/subscriptions/#{@subscription_id}/resourceGroups/#{resource_group}/providers/Microsoft.Network/publicIPAddresses/#{ip_configuration_name}",
                     ip_configuration_name: ip_configuration_name,
                     private_ip_allocation_method: private_ip_allocation_method
                 )
@@ -425,7 +426,7 @@ module AvstCloud
         end
 
         def server_status(server_name, resource_group)
-            'unknown'
+            connect.servers(resource_group: resource_group).get(server_name).vm_status
         end
 
         def list_images
@@ -442,7 +443,7 @@ module AvstCloud
         end
 
         def find_fog_server(server_name, resource_group, should_fail=true)
-            serv = connect.servers(resource_group: resource_group).get(resource_group, server_name)
+            serv = connect.servers(resource_group: resource_group).get(server_name)
             unless serv
                 if should_fail
                     logger.debug "Server not found for name: #{server_name} in resource group #{resource_group}"
