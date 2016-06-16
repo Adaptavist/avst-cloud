@@ -12,19 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require_relative './avst-cloud/aws_connection.rb'
-require_relative './avst-cloud/aws_server.rb'
-require_relative './avst-cloud/azure_connection.rb'
-require_relative './avst-cloud/azure_server.rb'
-require_relative './avst-cloud/rackspace_connection.rb'
-require_relative './avst-cloud/rackspace_server.rb'
-require_relative './avst-cloud/logging.rb'
-require 'fog'
 require 'net/ssh'
 require 'net/scp'
 require 'uri'
 require 'colorize'
-
+require 'fog'
 module AvstCloud
-
 end

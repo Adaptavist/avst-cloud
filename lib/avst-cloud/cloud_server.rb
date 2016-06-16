@@ -28,10 +28,10 @@ module AvstCloud
             @access_password = access_password
         end 
 
-        def bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log)
+        def bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log, enable_sudo="false")
             logger.debug "Bootstrapping #{server_name}...".green
             run_tasks([AvstCloud::WaitUntilReady.new])
-            disable_tty_task = AvstCloud::DisableRequireTty.new(@access_user)
+            disable_tty_task = AvstCloud::DisableRequireTty.new(@access_user, @access_password, enable_sudo)
             pre_upload_commands_tasks = AvstCloud::SshCommandTask.new(pre_upload_commands, remote_server_debug, debug_structured_log)
             custom_file_uploads_tasks = AvstCloud::ScpTask.new(custom_file_uploads)
             post_upload_commands_tasks = AvstCloud::SshCommandTask.new(post_upload_commands, remote_server_debug, debug_structured_log)

@@ -15,6 +15,8 @@
 # limitations under the License.
 
 require 'avst-cloud'
+require 'avst-cloud/aws_connection'
+require 'avst-cloud/aws_server'
 
 avst_cloud_base="#{File.expand_path("../../", __FILE__)}"
 
@@ -71,7 +73,7 @@ post_upload_commands = [
 remote_server_debug = true
 debug_structured_log = false
 
-server.bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log)
+server.bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log, false)
 
 git = "ssh://git@you_repo.git"
 branch = "master" 

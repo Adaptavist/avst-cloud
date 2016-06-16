@@ -15,6 +15,8 @@
 # limitations under the License.
 
 require 'avst-cloud'
+require 'avst-cloud/azure_connection'
+require 'avst-cloud/azure_server'
 
 avst_cloud_base="#{File.expand_path("../../", __FILE__)}"
 
@@ -35,6 +37,7 @@ instance_type = nil
 storage_account_name = nil
 
 conn.list_known_servers
+
 server = conn.create_server(server_name, user, private_key_file, location, image_id, instance_type, storage_account_name)
 # fog_server = conn.find_fog_server(server_name)
 # server = AvstCloud::AzureServer.new(fog_server, server_name, nil, user, private_key_file)
@@ -69,7 +72,7 @@ post_upload_commands = [
 remote_server_debug = true
 debug_structured_log = false
 
-server.bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log)
+server.bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log, false)
 
 git = "ssh://git@you_repo.git"
 branch = "master" 
