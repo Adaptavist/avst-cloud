@@ -381,6 +381,11 @@ module AvstCloud
             if (server and server.storage_account_name)
                 storage_account_name = server.storage_account_name
             end
+            # storage account name not provided as part of server, trying to get it from vhd_uri
+            unless storage_account_name and server.vhd_uri
+                # vhd_uri="http://storage_account_name.blob.core.windows.net/vhds/servername_os_disk.vhd"
+                storage_account_name = server.vhd_uri.split(".")[0].split("/")[-1]
+            end
             storage_account_name
         end
 
