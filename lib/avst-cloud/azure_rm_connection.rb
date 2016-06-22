@@ -68,6 +68,7 @@ module AvstCloud
             offer,
             sku,
             version,
+            platform,
             location, 
             resource_group, 
             vm_size, 
@@ -82,12 +83,13 @@ module AvstCloud
             dns_list, 
             network_address_list, 
             address_prefix,
-            use_public_ip)
+            use_public_ip,
+            create_public_ip_configuration)
 
             location = location || 'West Europe'
             user = user || get_root_user
             vm_size = vm_size || "Basic_A0"
-            
+            platform = platform || "Linux"
             # Check that resource_group exists if not create one
             check_create_resource_group(resource_group, location)
             
@@ -108,13 +110,14 @@ module AvstCloud
                 logger.debug "offer                - #{offer}"
                 logger.debug "sku                  - #{sku}"
                 logger.debug "version              - #{version}"
+                logger.debug "platform             - #{platform}"
 
                 # Check that storage_account exists if not create one
                 check_create_storage_account(storage_account_name, location, resource_group)
                 
                 # Check if network_interface_card_id exists if not create one
                 # If not, create one for virtual network provided with subnet, security group and also public ip name
-                ip_address = check_create_network_interface(network_interface_name, resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method, public_ip_allocation_method, subnet_address_list, dns_list, network_address_list, address_prefix, use_public_ip)
+                ip_address = check_create_network_interface(network_interface_name, resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method, public_ip_allocation_method, subnet_address_list, dns_list, network_address_list, address_prefix, use_public_ip, create_public_ip_configuration)
                 
                 # create server
                 server = connect.servers.create(
@@ -130,7 +133,8 @@ module AvstCloud
                     publisher: publisher,
                     offer: offer,
                     sku: sku,
-                    version: version
+                    version: version,
+                    platform: platform
                 )
                 
                 result_server = AvstCloud::AzureRmServer.new(server, server_name, ip_address, user, password)
@@ -147,11 +151,16 @@ module AvstCloud
             logger.debug "#{storage_acc.inspect}"
         end
 
-        def check_create_network_interface(network_interface_name, resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method="Dynamic", public_ip_allocation_method="Static", subnet_address_list=nil, dns_list=nil, network_address_list=nil, address_prefix=nil, use_public_ip=true)
+        def check_create_network_interface(network_interface_name, resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method="Dynamic", public_ip_allocation_method="Static", subnet_address_list=nil, dns_list=nil, network_address_list=nil, address_prefix=nil, use_public_ip=true, create_public_ip_configuration=true)
             nic = connect_to_networks.network_interfaces(resource_group: resource_group).get(network_interface_name)
         
             # check/create ip_configuration_name exists
-            public_ip = check_create_ip_configuration(ip_configuration_name, resource_group, location, public_ip_allocation_method)
+            if create_public_ip_configuration
+                public_ip = check_create_ip_configuration(ip_configuration_name, resource_group, location, public_ip_allocation_method)
+                public_ip_address_id =  "/subscriptions/#{@subscription_id}/resourceGroups/#{resource_group}/providers/Microsoft.Network/publicIPAddresses/#{ip_configuration_name}"
+            else
+                use_public_ip = false
+            end
             unless nic
                 # check/create  virtual_network exists
                 vnet = check_create_virtual_network(virtual_network_name, resource_group, location, subnet_address_list, dns_list, network_address_list)
@@ -167,16 +176,16 @@ module AvstCloud
                     subnet_name = subnets[0].name
                     logger.debug "Using subnet #{subnet_name}"
                 end
-                
                 nic = connect_to_networks.network_interfaces.create(
                     name: network_interface_name,
                     resource_group: resource_group,
                     location: location,
                     subnet_id: "/subscriptions/#{@subscription_id}/resourceGroups/#{resource_group}/providers/Microsoft.Network/virtualNetworks/#{virtual_network_name}/subnets/#{subnet_name}",
-                    public_ip_address_id: "/subscriptions/#{@subscription_id}/resourceGroups/#{resource_group}/providers/Microsoft.Network/publicIPAddresses/#{ip_configuration_name}",
+                    public_ip_address_id: public_ip_address_id,
                     ip_configuration_name: ip_configuration_name,
                     private_ip_allocation_method: private_ip_allocation_method
                 )
+
             end
             if use_public_ip
                 public_ip
@@ -381,10 +390,12 @@ module AvstCloud
             if (server and server.storage_account_name)
                 storage_account_name = server.storage_account_name
             end
-            # storage account name not provided as part of server, trying to get it from vhd_uri
-            unless storage_account_name and server.vhd_uri
-                # vhd_uri="http://storage_account_name.blob.core.windows.net/vhds/servername_os_disk.vhd"
-                storage_account_name = server.vhd_uri.split(".")[0].split("/")[-1]
+            # storage account name not provided as part of server, trying to get it from os_disk_vhd_uri
+            unless storage_account_name
+                if server.os_disk_vhd_uri != nil
+                    # os_disk_vhd_uri="http://storage_account_name.blob.core.windows.net/vhds/servername_os_disk.vhd"
+                    storage_account_name = server.os_disk_vhd_uri.split(".")[0].split("/")[-1]
+                end
             end
             storage_account_name
         end
