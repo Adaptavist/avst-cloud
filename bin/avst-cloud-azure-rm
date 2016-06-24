@@ -35,7 +35,7 @@ publisher = 'Canonical'
 offer = 'UbuntuServer'
 sku = '14.04.2-LTS'
 version = 'latest'
-
+platform = nil # defaults to Linux
 server_name = "hostname1"
 user = "ubuntu"
 # Must comply to Azure pass guidelines
@@ -55,6 +55,7 @@ dns_list = nil
 network_address_list = nil
 address_prefix  = nil
 use_public_ip = true # will return public ip, if set to false, private will be used by bootstrap
+create_public_ip_configuration = true # in case you do not want to create public ip config set to false, ip_configuration_name needs to be set anyway, defaults to true
 serv = conn.create_server(server_name, 
             user, 
             password,
@@ -62,7 +63,8 @@ serv = conn.create_server(server_name,
             offer,
             sku,
             version, 
-            location, 
+            platform,
+            location,
             resource_group, 
             vm_size, 
             storage_account_name, 
@@ -76,7 +78,8 @@ serv = conn.create_server(server_name,
             dns_list, 
             network_address_list, 
             address_prefix,
-            use_public_ip)
+            use_public_ip,
+            create_public_ip_configuration)
 
 # serv = conn.server(server_name, resource_group ,user, password)
 # puts serv.inspect
