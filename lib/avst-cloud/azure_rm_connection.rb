@@ -188,7 +188,7 @@ module AvstCloud
                 # check/create  virtual_network exists
                 vnet = check_create_virtual_network(virtual_network_name, virtual_network_resource_group, location, subnet_address_list, dns_list, network_address_list)
                 
-                subnet_resource_group = resource_group unless subnet_resource_group
+                subnet_resource_group = virtual_network_resource_group unless subnet_resource_group
                 # check if provided subnet exists, if nil then use default one
                 unless subnet_name
                     subnets = connect_to_networks.subnets(resource_group: subnet_resource_group, virtual_network_name: virtual_network_name)
