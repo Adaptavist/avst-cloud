@@ -27,7 +27,7 @@ module AvstCloud
             @subscription_id = subscription_id
         end
         
-        def server(server_name, resource_group, root_user, root_password, use_public_ip=true)
+        def server(server_name, resource_group, root_user, root_password, use_public_ip=true, network_interface_resource_group=nil, public_ip_resource_group=nil )
             server = find_fog_server(server_name, resource_group)
             if !root_user
                 root_user = get_root_user
@@ -35,22 +35,24 @@ module AvstCloud
             ip_address = nil
             if (server.network_interface_card_id)
                 network_interface_card_name = server.network_interface_card_id.split("/")[-1]
-                nic = connect_to_networks.network_interfaces(resource_group: resource_group).get(network_interface_card_name)
+                network_interface_resource_group = resource_group unless network_interface_resource_group
+                nic = connect_to_networks.network_interfaces(resource_group: network_interface_resource_group).get(network_interface_card_name)
                 if nic
                     if use_public_ip
                         if nic.public_ip_address_id
                             ip_configuration_name = nic.public_ip_address_id.split("/")[-1]
-                            pip = connect_to_networks.public_ips(resource_group: resource_group).get(ip_configuration_name)
+                            public_ip_resource_group = network_interface_resource_group unless public_ip_resource_group
+                            pip = connect_to_networks.public_ips(resource_group: public_ip_resource_group).get(ip_configuration_name)
                             ip_address = pip.ip_address
                         else
-                            logger.debug "Can not find public ip for server #{server_name} in resource_group #{resource_group}"
+                            logger.debug "Can not find public ip for server #{server_name} in resource_group #{public_ip_resource_group}"
                             raise "Can not find public ip"
                         end
                     else
                         ip_address = nic.private_ip_address
                     end
                 else
-                    logger.debug "Can not find network interface card for server #{server_name} in resource_group #{resource_group}"
+                    logger.debug "Can not find network interface card for server #{server_name} in resource_group #{network_interface_resource_group}"
                     raise "Can not find network interface card"
                 end
             else 
@@ -84,7 +86,13 @@ module AvstCloud
             network_address_list, 
             address_prefix,
             use_public_ip,
-            create_public_ip_configuration)
+            create_public_ip_configuration,
+            storage_account_resource_group=nil,
+            virtual_network_resource_group=nil, 
+            network_interface_resource_group=nil, 
+            public_ip_resource_group=nil,
+            subnet_resource_group=nil
+            )
 
             location = location || 'West Europe'
             user = user || get_root_user
@@ -112,12 +120,24 @@ module AvstCloud
                 logger.debug "version              - #{version}"
                 logger.debug "platform             - #{platform}"
 
+                storage_account_resource_group = resource_group unless storage_account_resource_group
+                virtual_network_resource_group = resource_group unless virtual_network_resource_group
+                network_interface_resource_group = virtual_network_resource_group unless network_interface_resource_group
+                public_ip_resource_group = virtual_network_resource_group unless public_ip_resource_group
+                subnet_resource_group = virtual_network_resource_group unless subnet_resource_group
+
+                logger.debug "storage_account_resource_group   - #{storage_account_resource_group}"
+                logger.debug "network_interface_resource_group - #{network_interface_resource_group}"
+                logger.debug "virtual_network_resource_group   - #{virtual_network_resource_group}"
+                logger.debug "public_ip_resource_group         - #{public_ip_resource_group}"
+                logger.debug "subnet_resource_group            - #{subnet_resource_group}"
+
                 # Check that storage_account exists if not create one
-                check_create_storage_account(storage_account_name, location, resource_group)
+                check_create_storage_account(storage_account_name, location, storage_account_resource_group)
                 
                 # Check if network_interface_card_id exists if not create one
                 # If not, create one for virtual network provided with subnet, security group and also public ip name
-                ip_address = check_create_network_interface(network_interface_name, resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method, public_ip_allocation_method, subnet_address_list, dns_list, network_address_list, address_prefix, use_public_ip, create_public_ip_configuration)
+                ip_address = check_create_network_interface(network_interface_name, network_interface_resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method, public_ip_allocation_method, subnet_address_list, dns_list, network_address_list, address_prefix, use_public_ip, create_public_ip_configuration, virtual_network_resource_group, public_ip_resource_group, subnet_resource_group)
                 
                 # create server
                 server = connect.servers.create(
@@ -129,7 +149,7 @@ module AvstCloud
                     username: user,
                     password: password,
                     disable_password_authentication: false,
-                    network_interface_card_id: "/subscriptions/#{@subscription_id}/resourceGroups/#{resource_group}/providers/Microsoft.Network/networkInterfaces/#{network_interface_name}",
+                    network_interface_card_id: "/subscriptions/#{@subscription_id}/resourceGroups/#{network_interface_resource_group}/providers/Microsoft.Network/networkInterfaces/#{network_interface_name}",
                     publisher: publisher,
                     offer: offer,
                     sku: sku,
@@ -151,23 +171,27 @@ module AvstCloud
             logger.debug "#{storage_acc.inspect}"
         end
 
-        def check_create_network_interface(network_interface_name, resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method="Dynamic", public_ip_allocation_method="Static", subnet_address_list=nil, dns_list=nil, network_address_list=nil, address_prefix=nil, use_public_ip=true, create_public_ip_configuration=true)
+        def check_create_network_interface(network_interface_name, resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method="Dynamic", public_ip_allocation_method="Static", subnet_address_list=nil, dns_list=nil, network_address_list=nil, address_prefix=nil, use_public_ip=true, create_public_ip_configuration=true, virtual_network_resource_group=nil, public_ip_resource_group=nil, subnet_resource_group=nil)
             nic = connect_to_networks.network_interfaces(resource_group: resource_group).get(network_interface_name)
         
             # check/create ip_configuration_name exists
             if create_public_ip_configuration
-                public_ip = check_create_ip_configuration(ip_configuration_name, resource_group, location, public_ip_allocation_method)
-                public_ip_address_id =  "/subscriptions/#{@subscription_id}/resourceGroups/#{resource_group}/providers/Microsoft.Network/publicIPAddresses/#{ip_configuration_name}"
+                public_ip_resource_group = resource_group unless public_ip_resource_group
+                public_ip = check_create_ip_configuration(ip_configuration_name, public_ip_resource_group, location, public_ip_allocation_method)
+                public_ip_address_id =  "/subscriptions/#{@subscription_id}/resourceGroups/#{public_ip_resource_group}/providers/Microsoft.Network/publicIPAddresses/#{ip_configuration_name}"
             else
                 use_public_ip = false
             end
             unless nic
+                # default virtual_network_resource_group to network interface resource group
+                virtual_network_resource_group = resource_group unless virtual_network_resource_group
                 # check/create  virtual_network exists
-                vnet = check_create_virtual_network(virtual_network_name, resource_group, location, subnet_address_list, dns_list, network_address_list)
+                vnet = check_create_virtual_network(virtual_network_name, virtual_network_resource_group, location, subnet_address_list, dns_list, network_address_list)
                 
+                subnet_resource_group = virtual_network_resource_group unless subnet_resource_group
                 # check if provided subnet exists, if nil then use default one
-                unless subnet_name                    
-                    subnets = connect_to_networks.subnets(resource_group: resource_group, virtual_network_name: virtual_network_name)
+                unless subnet_name
+                    subnets = connect_to_networks.subnets(resource_group: subnet_resource_group, virtual_network_name: virtual_network_name)
                     if subnets.length == 0
                         raise "Can not decide what subnet to choose. There are no subnets for virtual network #{virtual_network_name}."
                     elsif subnets.length != 1
@@ -180,7 +204,7 @@ module AvstCloud
                     name: network_interface_name,
                     resource_group: resource_group,
                     location: location,
-                    subnet_id: "/subscriptions/#{@subscription_id}/resourceGroups/#{resource_group}/providers/Microsoft.Network/virtualNetworks/#{virtual_network_name}/subnets/#{subnet_name}",
+                    subnet_id: "/subscriptions/#{@subscription_id}/resourceGroups/#{subnet_resource_group}/providers/Microsoft.Network/virtualNetworks/#{virtual_network_name}/subnets/#{subnet_name}",
                     public_ip_address_id: public_ip_address_id,
                     ip_configuration_name: ip_configuration_name,
                     private_ip_allocation_method: private_ip_allocation_method
@@ -194,12 +218,13 @@ module AvstCloud
             end
         end
         
-        def find_network_interface_for_server(server_name, resource_group, should_fail=false)
+        def find_network_interface_for_server(server_name, resource_group, should_fail=false, network_interface_resource_group=nil)
             server = find_fog_server(server_name, resource_group)
             network_interface = nil
             if (server and server.network_interface_card_id)
                 network_interface_card_name = server.network_interface_card_id.split("/")[-1]
-                network_interface = connect_to_networks.network_interfaces(resource_group: resource_group).get(network_interface_card_name)
+                network_interface_resource_group = resource_group unless network_interface_resource_group
+                network_interface = connect_to_networks.network_interfaces(resource_group: network_interface_resource_group).get(network_interface_card_name)
             else
                 logger.debug "Can not find network interface card for server #{server_name} in resource_group #{resource_group}"
                 raise "Can not find network interface card" if should_fail 
@@ -249,21 +274,23 @@ module AvstCloud
             logger.debug "Public IP deleted"
         end
 
-        def destroy_ip_configuration_for_server(server_name, resource_group, should_fail=false)
+        def destroy_ip_configuration_for_server(server_name, resource_group, should_fail=false, network_interface_resource_group=nil, public_ip_resource_group=nil)
             server = find_fog_server(server_name, resource_group)
             if (server.network_interface_card_id)
                 network_interface_card_name = server.network_interface_card_id.split("/")[-1]
-                nic = connect_to_networks.network_interfaces(resource_group: resource_group).get(network_interface_card_name)
+                network_interface_resource_group = resource_group unless network_interface_resource_group
+                nic = connect_to_networks.network_interfaces(resource_group: network_interface_resource_group).get(network_interface_card_name)
                 if nic
                     if nic.public_ip_address_id
                         ip_configuration_name = nic.public_ip_address_id.split("/")[-1]
-                        destroy_ip_configuration(ip_configuration_name, resource_group)
+                        public_ip_resource_group = network_interface_resource_group unless public_ip_resource_group
+                        destroy_ip_configuration(ip_configuration_name, public_ip_resource_group)
                     else
-                        logger.debug "Can not find public ip for server #{server_name} in resource_group #{resource_group}"
+                        logger.debug "Can not find public ip for server #{server_name} in resource_group #{network_interface_resource_group}"
                         raise "Can not find public ip" if should_fail
                     end
                 else
-                    logger.debug "Can not find network interface card for server #{server_name} in resource_group #{resource_group}"
+                    logger.debug "Can not find network interface card for server #{server_name} in resource_group #{network_interface_resource_group}"
                     raise "Can not find network interface card" if should_fail
                 end
             else 
@@ -295,22 +322,24 @@ module AvstCloud
             logger.debug "Subnet deleted"
         end
 
-        def destroy_subnet_for_server(server_name, resource_group, should_fail=false)
+        def destroy_subnet_for_server(server_name, resource_group, should_fail=false, network_interface_resource_group=nil, subnet_resource_group=nil)
             server = find_fog_server(server_name, resource_group)
             if (server.network_interface_card_id)
                 network_interface_card_name = server.network_interface_card_id.split("/")[-1]
-                nic = connect_to_networks.network_interfaces(resource_group: resource_group).get(network_interface_card_name)
+                network_interface_resource_group = resource_group unless network_interface_resource_group
+                nic = connect_to_networks.network_interfaces(resource_group: network_interface_resource_group).get(network_interface_card_name)
                 if nic
                     if nic.subnet_id
                         subnet_id_name = nic.subnet_id.split("/")[-1]
                         virtual_network_name = nic.subnet_id.split("virtualNetworks/")[-1].split("/")[0]
+                        subnet_resource_group = network_interface_resource_group unless subnet_resource_group
                         destroy_subnet(subnet_id_name, resource_group, virtual_network_name)
                     else
-                        logger.debug "Can not find subnet for server #{server_name} in resource_group #{resource_group}"
+                        logger.debug "Can not find subnet for server #{server_name} in resource_group #{network_interface_resource_group}"
                         raise "Can not find subnet" if should_fail
                     end
                 else
-                    logger.debug "Can not find network interface card for server #{server_name} in resource_group #{resource_group}"
+                    logger.debug "Can not find network interface card for server #{server_name} in resource_group #{network_interface_resource_group}"
                     raise "Can not find network interface card" if should_fail
                 end
             else 
@@ -339,21 +368,23 @@ module AvstCloud
             vnet
         end
 
-        def destroy_virtual_network_for_server(server_name, resource_group, should_fail=false)
+        def destroy_virtual_network_for_server(server_name, resource_group, should_fail=false, network_interface_resource_group=nil, subnet_resource_group=nil)
             server = find_fog_server(server_name, resource_group)
             if (server.network_interface_card_id)
                 network_interface_card_name = server.network_interface_card_id.split("/")[-1]
-                nic = connect_to_networks.network_interfaces(resource_group: resource_group).get(network_interface_card_name)
+                network_interface_resource_group = resource_group unless network_interface_resource_group
+                nic = connect_to_networks.network_interfaces(resource_group: network_interface_resource_group).get(network_interface_card_name)
                 if nic
                     if nic.subnet_id
                         virtual_network_name = nic.subnet_id.split("virtualNetworks/")[-1].split("/")[0]
+                        subnet_resource_group = virtual_network_resource_group unless subnet_resource_group
                         destroy_virtual_network(virtual_network_name, resource_group)
                     else
-                        logger.debug "Can not find virtual network for server #{server_name} in resource_group #{resource_group}"
+                        logger.debug "Can not find virtual network for server #{server_name} in resource_group #{virtual_network_resource_group}"
                         raise "Can not find subnet" if should_fail
                     end
                 else
-                    logger.debug "Can not find network interface card for server #{server_name} in resource_group #{resource_group}"
+                    logger.debug "Can not find network interface card for server #{server_name} in resource_group #{virtual_network_resource_group}"
                     raise "Can not find network interface card" if should_fail
                 end
             else 
@@ -400,11 +431,12 @@ module AvstCloud
             storage_account_name
         end
 
-        def destroy_storage_account_for_server(server_name, resource_group, should_fail=false)
+        def destroy_storage_account_for_server(server_name, resource_group, should_fail=false, storage_account_resource_group=nil)
             server = find_fog_server(server_name, resource_group)
             if (server.storage_account_name)
                 storage_account_name = server.storage_account_name
-                destroy_storage_account(storage_account_name, resource_group)
+                storage_account_resource_group = resource_group unless storage_account_resource_group
+                destroy_storage_account(storage_account_name, storage_account_resource_group)
             else 
                 logger.debug "Can not find storage account for server #{server_name} in resource_group #{resource_group}"
                 raise "Can not find storage account" if should_fail
