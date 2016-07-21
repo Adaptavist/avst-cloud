@@ -87,6 +87,7 @@ module AvstCloud
             address_prefix,
             use_public_ip,
             create_public_ip_configuration,
+            availability_set_name=nil,
             storage_account_resource_group=nil,
             virtual_network_resource_group=nil, 
             network_interface_resource_group=nil, 
@@ -119,6 +120,7 @@ module AvstCloud
                 logger.debug "sku                  - #{sku}"
                 logger.debug "version              - #{version}"
                 logger.debug "platform             - #{platform}"
+                logger.debug "availability_set_name- #{availability_set_name}"
 
                 storage_account_resource_group = resource_group unless storage_account_resource_group
                 virtual_network_resource_group = resource_group unless virtual_network_resource_group
@@ -135,6 +137,8 @@ module AvstCloud
                 # Check that storage_account exists if not create one
                 check_create_storage_account(storage_account_name, location, storage_account_resource_group)
                 
+                availability_set_id = availability_set_name ? check_create_availability_set(availability_set_name, resource_group, location).id : nil
+
                 # Check if network_interface_card_id exists if not create one
                 # If not, create one for virtual network provided with subnet, security group and also public ip name
                 ip_address = check_create_network_interface(network_interface_name, network_interface_resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method, public_ip_allocation_method, subnet_address_list, dns_list, network_address_list, address_prefix, use_public_ip, create_public_ip_configuration, virtual_network_resource_group, public_ip_resource_group, subnet_resource_group)
@@ -154,7 +158,8 @@ module AvstCloud
                     offer: offer,
                     sku: sku,
                     version: version,
-                    platform: platform
+                    platform: platform,
+                    availability_set_id: availability_set_id
                 )
                 
                 result_server = AvstCloud::AzureRmServer.new(server, server_name, ip_address, user, password)
@@ -450,6 +455,49 @@ module AvstCloud
                 account.destroy
             end
             logger.debug "Storage deleted"
+        end
+
+        def check_create_availability_set(availability_set_name, resource_group, location)
+            logger.debug "Searching for #{resource_group}"
+            found_availability_set = connect.availability_sets(resource_group: resource_group).get(resource_group, availability_set_name)
+            unless found_availability_set
+                logger.debug "Availability set #{availability_set_name} in #{resource_group} not found, creating new one"
+                found_availability_set = connect.availability_sets.create(
+                     name: availability_set_name,
+                     location: location,
+                     resource_group: resource_group
+                )
+            end
+            found_availability_set
+        end
+        
+        def find_availability_set_name_for_server(server_name, resource_group, should_fail=true)
+            availability_set_name = nil
+            server = find_fog_server(server_name, resource_group)
+            if (server.availability_set_id)
+                availability_set_name = server.availability_set_id.split("/")[-1]
+            else 
+                logger.debug "Can not find availability_set_id for server #{server_name} in resource_group #{resource_group}"
+                raise "Can not find availability_set_id" if should_fail
+            end
+            availability_set_name
+        end
+
+        def list_availability_sets(resource_group)
+            availability_sets  = connect.availability_sets(resource_group: resource_group)
+            availability_sets.each do |availability_set|
+                logger.debug "#{availability_set.id}"
+                logger.debug "#{availability_set.name}"
+                logger.debug "#{availability_set.location}"
+            end
+        end
+
+        def destroy_availability_set(availability_set_name, resource_group)
+            logger.debug "Deleting #{resource_group}"
+            found_availability_set = connect.availability_sets(resource_group: resource_group).get(resource_group, availability_set_name)
+            if found_availability_set
+                found_availability_set.destroy
+            end
         end
 
         def check_create_resource_group(resource_group, location)
