@@ -87,6 +87,7 @@ module AvstCloud
             address_prefix,
             use_public_ip,
             create_public_ip_configuration,
+            data_disks={},
             availability_set_name=nil,
             storage_account_resource_group=nil,
             virtual_network_resource_group=nil, 
@@ -121,6 +122,7 @@ module AvstCloud
                 logger.debug "version              - #{version}"
                 logger.debug "platform             - #{platform}"
                 logger.debug "availability_set_name- #{availability_set_name}"
+                logger.debug "data_disks           - #{data_disks}"
 
                 storage_account_resource_group = resource_group unless storage_account_resource_group
                 virtual_network_resource_group = resource_group unless virtual_network_resource_group
@@ -161,12 +163,27 @@ module AvstCloud
                     platform: platform,
                     availability_set_id: availability_set_id
                 )
-                
+                if data_disks
+                    data_disks.keys.each do |data_disk_name|
+                        attach_data_disk(server, data_disk_name, data_disks[data_disk_name], storage_account_name)
+                    end
+                end
                 result_server = AvstCloud::AzureRmServer.new(server, server_name, ip_address, user, password)
                 logger.debug "[DONE]\n\n"
                 logger.debug "The server has been successfully created, to login onto the server:\n"
                 logger.debug "\t ssh #{user}@#{ip_address} with pass #{password} \n"
                 result_server
+            end
+        end
+
+        def attach_data_disk(server, disk_name, size_in_gb, storage_account_name)
+            server.attach_data_disk(disk_name, size_in_gb, storage_account_name)
+        end
+
+        def detatch_data_disk(server_name, resource_group, storage_account, disk_name)
+            server = find_fog_server(server_name, resource_group)
+            if server
+                server.detach_data_disk(disk_name)
             end
         end
 
