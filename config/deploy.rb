@@ -48,10 +48,10 @@ set :keep_releases, 50000
 after 'deploy', 'prepare_puppet_and_execute'
 
 set :default_env, {
-  'PATH' => "/usr/local/rvm/gems/ruby-2.0.0-p481/bin:/usr/local/rvm/gems/ruby-2.0.0-p481@global/bin:/usr/local/rvm/rubies/ruby-2.0.0-p481/bin:/usr/local/rvm/bin:$PATH",
+  'PATH' => "/usr/local/rvm/gems/ruby-2.0.0-p576/bin:/usr/local/rvm/gems/ruby-2.0.0-p576@global/bin:/usr/local/rvm/rubies/ruby-2.0.0-p576/bin:/usr/local/rvm/bin:$PATH",
   'RUBY_VERSION' => '2.0.0',
-  'GEM_HOME'     => '/usr/local/rvm/gems/ruby-2.0.0-p481',
-  'GEM_PATH'     => '/usr/local/rvm/gems/ruby-2.0.0-p481',
+  'GEM_HOME'     => '/usr/local/rvm/gems/ruby-2.0.0-p576',
+  'GEM_PATH'     => '/usr/local/rvm/gems/ruby-2.0.0-p576',
   # 'BUNDLE_PATH'  => '/path/to/.rvm/gems/ree-1.8.7-2010.01'  # If you are using bundler.
 }
 
