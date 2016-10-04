@@ -26,7 +26,6 @@ module AvstCloud
     end
 
     class SshTask < AvstCloud::Task
-        include Logging
         def execute(server)
             unless server.ip_address
                 logger.error 'Can not find host'.red
@@ -43,7 +42,7 @@ module AvstCloud
                 raise 'Password not found. Please provide root_password in config. for this server.'
             end
 
-            logger.debug "Using #{server.access_user}@#{server.ip_address} with #{server.access_password} to perform ssh task."
+            logger.debug "Using #{server.access_user}@#{server.ip_address} with #{Logging.mask_message(server.access_password)} to perform ssh task."
             attempts = 1
             success = false
             max_attempts = 50
@@ -71,8 +70,6 @@ module AvstCloud
     end
 
     class SshCommandTask < AvstCloud::SshTask
-        include Logging
-
         def initialize(cmds, debug = false, structured_log = false)
             @cmds = cmds
             @debug = debug
@@ -107,7 +104,6 @@ module AvstCloud
     # for user that performs it
     # In case user does not have sudo no pass, enable it for bootstrapping and provisioning
     class DisableRequireTty < AvstCloud::SshTask
-        include Logging
         def initialize(for_user, pass, enable_passwordless_sudo=false)
             @for_user = for_user
             @user_password = pass
@@ -153,7 +149,6 @@ module AvstCloud
     end
 
     class WaitUntilReady < AvstCloud::SshTask
-        include Logging
 
         def ssh_command(session)
             session.open_channel do |channel|
@@ -180,7 +175,6 @@ module AvstCloud
     end
 
     class CapistranoDeploymentTask < AvstCloud::Task
-        include Logging
 
         def initialize(git, branch, server_tmp_folder = "/tmp/avst_cloud_tmp_#{Time.now.to_i}", reference = nil, custom_provisioning_commands = [], puppet_runner = nil, puppet_runner_prepare = nil, destination_folder = '/var/opt/puppet')
             unless git and (branch or reference)
@@ -214,8 +208,7 @@ module AvstCloud
                 raise 'Password not found. Please provide root_password in config. for this server.'
             end
 
-            logger.debug "Using #{server.access_user}@#{server.ip_address} with #{server.access_password}"
-
+            logger.debug "Using #{server.access_user}@#{server.ip_address} with #{Logging.mask_message(server.access_password)}"
 
             # Initiate capistrano deploy script to download the laters code and provision the server
             require 'capistrano/all'
@@ -264,7 +257,6 @@ module AvstCloud
     end
 
     class ScpTask < AvstCloud::Task
-        include Logging
 
         def initialize(files)
             @files = files
@@ -286,7 +278,7 @@ module AvstCloud
                 raise 'Password not found. Please provide root_password in config. for this server.'
             end
 
-            logger.debug "Using #{server.access_user}@#{server.ip_address} with #{server.access_password}"
+            logger.debug "Using #{server.access_user}@#{server.ip_address} with #{Logging.mask_message(server.access_password)}"
             Net::SCP.start( server.ip_address, server.access_user, :password => server.access_password, :keys => [server.access_password] ) do |scp|
                 @files.each do |local_file, remote_path|
                     upload_file(scp, local_file, remote_path)

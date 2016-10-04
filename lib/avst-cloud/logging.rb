@@ -15,22 +15,34 @@
 require 'logger'
 
 module Logging
+
+  def self.logger
+    @logger ||= Logger.new(STDOUT)
+  end
+
+  def self.logger=(logger)
+    @logger = logger
+  end
+
+  def self.show_passwords=(show_passwords)
+    @show_passwords = show_passwords
+  end
+
+  def self.mask_message(message)
+    !@show_passwords ? "*****" : message
+  end
+
+  # Addition
   def self.included(base)
     class << base
       def logger
-        @logger ||= Logger.new($stdout)
-      end
-
-      def logger=(logger)
-        @logger = logger
+        Logging.logger
       end
     end
   end
 
   def logger
-    self.class.logger
+    Logging.logger
   end
-  def logger=(logger)
-    @logger = logger
-  end
+
 end
