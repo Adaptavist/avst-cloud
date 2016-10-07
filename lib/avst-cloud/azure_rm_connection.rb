@@ -115,7 +115,7 @@ module AvstCloud
                 logger.debug "storage_account_name - #{storage_account_name}"
                 logger.debug "vm_size              - #{vm_size}"
                 logger.debug "user                 - #{user}"
-                logger.debug "password             - #{password}"
+                logger.debug "password             - #{Logging.mask_message(password)}"
                 logger.debug "publisher            - #{publisher}"
                 logger.debug "offer                - #{offer}"
                 logger.debug "sku                  - #{sku}"
@@ -171,7 +171,7 @@ module AvstCloud
                 result_server = AvstCloud::AzureRmServer.new(server, server_name, ip_address, user, password)
                 logger.debug "[DONE]\n\n"
                 logger.debug "The server has been successfully created, to login onto the server:\n"
-                logger.debug "\t ssh #{user}@#{ip_address} with pass #{password} \n"
+                logger.debug "\t ssh #{user}@#{ip_address} with pass #{Logging.mask_message(password)} \n"
                 result_server
             end
         end

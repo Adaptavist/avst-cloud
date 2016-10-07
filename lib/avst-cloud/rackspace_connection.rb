@@ -78,7 +78,7 @@ module AvstCloud
                     logger.debug "You can continute to monitor the build process through the web console at https://mycloud.rackspace.com/\n\n"
                     raise "Timeout while creating Rackspace server #{server_name}"
                 end
-                logger.debug "The #{server.username} password is #{server.password}\n\n"
+                logger.debug "The #{server.username} password is #{Logging.mask_message(server.password)}\n\n"
             end
             result_server.access_user = server.username
             result_server.access_password = server.password
@@ -126,7 +126,7 @@ module AvstCloud
     private
         def connect
             unless @connection
-                logger.debug "Creating new connection to rackspace: #{@provider_user} #{@provider_pass} #{@region}"
+                logger.debug "Creating new connection to rackspace: #{@provider_user} #{Logging.mask_message(@provider_pass)} #{@region}"
                 @connection = Fog::Compute.new({
                     :provider             => 'rackspace',
                     :rackspace_username   => @provider_access_user,
