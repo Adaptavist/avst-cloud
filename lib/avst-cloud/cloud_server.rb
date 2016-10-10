@@ -46,11 +46,13 @@ module AvstCloud
             logger.debug "Provisioning done. You can connect to server on #{@ip_address}"
         end
 
-        def post_provisioning_cleanup(custom_commands, os, remote_server_debug, server_tmp_folder)
-            logger.debug "Cleaning up after provisioning #{server_name}..."
-            custom_cleanup_commands = AvstCloud::SshCommandTask.new(custom_commands, remote_server_debug, true)
-            run_tasks([AvstCloud::WaitUntilReady.new, AvstCloud::PostProvisionCleanup.new(os, remote_server_debug, server_tmp_folder), custom_cleanup_commands])
-            logger.debug "Post provisioning cleanup done. You can connect to server as #{@access_user} on #{@ip_address}"
+        def post_provisioning_commands(custom_commands, os, remote_server_debug, server_tmp_folder, run_cleanup=true)
+            logger.debug "Running post provision cleanup and custom commands on #{server_name}..."
+            custom_post_provision_commands = AvstCloud::SshCommandTask.new(custom_commands, remote_server_debug, true)
+            commands = [AvstCloud::WaitUntilReady.new, custom_post_provision_commands]
+            commands << AvstCloud::PostProvisionCleanup.new(os, remote_server_debug, server_tmp_folder) if run_cleanup
+            run_tasks(commands)
+            logger.debug "Post provisioning cleanup and custom commands done. You can connect to server as #{@access_user} on #{@ip_address}"
         end
 
         def run_tasks(tasks)
