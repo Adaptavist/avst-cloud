@@ -52,8 +52,8 @@ module AvstCloud
                         ssh_command session
                     end
                     success = true
-                rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Net::SSH::ConnectionTimeout, Timeout::Error => e
-                    logger.debug "Connection refused or timeout. Server may not have booted yet. Sleeping #{attempts}/#{max_attempts}"
+                rescue Net::SSH::AuthenticationFailed, Errno::ECONNREFUSED, Errno::ETIMEDOUT, Net::SSH::ConnectionTimeout, Timeout::Error => e
+                    logger.debug "Connection refused, timeout or authentication failed. Server may not have booted yet. Sleeping #{attempts}/#{max_attempts}: #{e.inspect}"
                     sleep(10)
                     attempts=attempts+1
                 end
