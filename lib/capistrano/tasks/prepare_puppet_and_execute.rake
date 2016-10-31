@@ -28,8 +28,8 @@ task :prepare_puppet_and_execute do
             avst_cloud_tmp_folder = ENV["avst_cloud_tmp_folder"]
             execute "mkdir #{avst_cloud_tmp_folder}"
 
-            if File.exist?("config/custom_system_config")
-                upload! "config/custom_system_config", avst_cloud_tmp_folder, recursive: true
+            if File.exist?("#{ENV["avst_cloud_config_dir"]}/custom_system_config")
+                upload! "#{ENV["avst_cloud_config_dir"]}/custom_system_config", avst_cloud_tmp_folder, recursive: true
                 execute "cp -rf #{avst_cloud_tmp_folder}/custom_system_config/* /var/opt/puppet/current/."
             end
 
@@ -51,8 +51,8 @@ task :prepare_puppet_and_execute do
             execute :link_puppet
             execute :link_hiera
 
-            if File.exist?("config/keys")
-                upload! "config/keys", "/etc/puppet/config", recursive: true
+            if File.exist?("#{ENV["avst_cloud_config_dir"]}/keys")
+                upload! "#{ENV["avst_cloud_config_dir"]}/keys", "/etc/puppet/config", recursive: true
             end
 
             within '/etc/puppet' do
