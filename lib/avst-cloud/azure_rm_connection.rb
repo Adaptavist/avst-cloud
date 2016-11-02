@@ -143,10 +143,10 @@ module AvstCloud
 
                 # Check if network_interface_card_id exists if not create one
                 # If not, create one for virtual network provided with subnet, security group and also public ip name
-                ip_address = check_create_network_interface(network_interface_name, network_interface_resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method, public_ip_allocation_method, subnet_address_list, dns_list, network_address_list, address_prefix, use_public_ip, create_public_ip_configuration, virtual_network_resource_group, public_ip_resource_group, subnet_resource_group)
+                check_create_network_interface(network_interface_name, network_interface_resource_group, location, virtual_network_name, subnet_name, ip_configuration_name, private_ip_allocation_method, public_ip_allocation_method, subnet_address_list, dns_list, network_address_list, address_prefix, use_public_ip, create_public_ip_configuration, virtual_network_resource_group, public_ip_resource_group, subnet_resource_group)
                 
                 # create server
-                server = connect.servers.create(
+                connect.servers.create(
                     name: server_name,
                     location: location,
                     resource_group: resource_group,
@@ -168,10 +168,11 @@ module AvstCloud
                         attach_data_disk(server, data_disk_name, data_disks[data_disk_name], storage_account_name)
                     end
                 end
-                result_server = AvstCloud::AzureRmServer.new(server, server_name, ip_address, user, password)
+                result_server = server(server_name, resource_group, user, password, use_public_ip, network_interface_resource_group, public_ip_resource_group)
+
                 logger.debug "[DONE]\n\n"
                 logger.debug "The server has been successfully created, to login onto the server:\n"
-                logger.debug "\t ssh #{user}@#{ip_address} with pass #{Logging.mask_message(password)} \n"
+                logger.debug "\t ssh #{user}@#{result_server.ip_address} with pass #{Logging.mask_message(password)} \n"
                 result_server
             end
         end
