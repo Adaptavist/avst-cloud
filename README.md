@@ -140,7 +140,7 @@ Uses Capistrano to download source from git repo (branch or tag) to destination_
 If puppet_runner param is defined:
 
 * create avst_cloud_tmp_folder on the server
-* uploads the content of local folder config/custom_system_config to it and then moves it to destination_folder
+* uploads the content of local folder config/custom_system_config to it and then moves it to destination_folder, in subfolder hiera-configs the only files uploaded may be server_name.yaml, server_name_facts.yaml and puppetfile_dictionary.yaml
 * if puppet_runner_prepare is defined, it will run it 
 * r10k puppetfile install
 * clear /etc/puppet folder
