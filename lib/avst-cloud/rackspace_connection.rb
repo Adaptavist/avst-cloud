@@ -89,8 +89,10 @@ module AvstCloud
         def server_status(server_name)
             server = find_fog_server(server_name, false)
             if server
+                logger.debug "Server with name '#{server_name}' exists and has state: #{server.state}"
                 server.state
             else
+                logger.debug "Server not found for name: #{server_name}"
                 'not_created'
             end
         end
