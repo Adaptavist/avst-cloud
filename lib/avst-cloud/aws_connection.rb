@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, vpc=nil, created_by=nil)
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, vpc=nil, created_by=nil, custom_tags={})
 
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
@@ -105,6 +105,7 @@ module AvstCloud
                 if created_by 
                     tags['created_by'] = created_by
                 end
+                tags.merge!(custom_tags)
                 # create server
                 server = connect.servers.create :tags => tags,
                                                 :flavor_id => flavour,
