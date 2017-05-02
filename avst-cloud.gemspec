@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency "bundler", "~> 1.6"
     spec.add_development_dependency "rake"
     spec.add_dependency "fog"
+    spec.add_dependency "fog-core", "1.43.0"
     spec.add_dependency "fog-azure"
     spec.add_dependency "fog-azure-rm", "0.0.3"
     spec.add_dependency "azure"
