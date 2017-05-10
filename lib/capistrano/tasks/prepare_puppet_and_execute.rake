@@ -23,7 +23,7 @@ task :prepare_puppet_and_execute do
             SSHKit.config.command_map[:create_puppet_files] = "sudo su -c 'if [ ! -d /var/opt/puppet/current/files ]; then mkdir /var/opt/puppet/current/files; fi'"
             SSHKit.config.command_map[:r10k] = "source /usr/local/rvm/scripts/rvm; r10k puppetfile install"
             SSHKit.config.command_map[:execute_puppet_runner] = "sudo su -c 'source /usr/local/rvm/scripts/rvm; #{ENV["puppet_runner"]}'"
-            SSHKit.config.command_map[:cleanup_configs_from_hiera_configs] = "sudo su -c 'find /var/opt/puppet/current/hiera-configs -maxdepth 1 -type f ! -name \'puppetfile_dictionary.yaml\' ! -name \'#{ENV["server_name"]}.yaml\' ! -name \'#{ENV["server_name"]}_facts.yaml\' -exec rm -f {} + '"
+            SSHKit.config.command_map[:cleanup_configs_from_hiera_configs] = "sudo su -c 'find /var/opt/puppet/current/hiera-configs -maxdepth 1 -type f ! -name \'puppetfile_dictionary_v4.yaml\' ! -name \'puppetfile_dictionary.yaml\' ! -name \'#{ENV["server_name"]}.yaml\' ! -name \'#{ENV["server_name"]}_facts.yaml\' -exec rm -f {} + '"
 
             # create folder in /tmp to store custom configs, this will be deleted by clean command
             avst_cloud_tmp_folder = ENV["avst_cloud_tmp_folder"]
