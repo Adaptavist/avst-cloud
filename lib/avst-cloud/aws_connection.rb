@@ -129,7 +129,18 @@ module AvstCloud
 
                 logger.debug "The server has been successfully created, to login onto the server:\n"
                 logger.debug "\t ssh -i #{ssh_key} #{root_user}@#{server.public_ip_address}\n"
-            
+                if create_ebs_volume
+                    logger.debug("Creating tags on ebs volumes")
+                    ebs_volumes = server.block_device_mapping
+                    logger.debug("Creating tags on ebs volumes #{ebs_volumes}")
+                    ebs_volumes.each do |ebs_volume|
+                        if ebs_volume['volumeId']
+                            tags.each do |key, value|
+                                connect.tags.create(:resource_id => ebs_volume['volumeId'], :key => key, :value => value)
+                            end
+                        end
+                    end
+                end
                 result_server.ip_address = server.public_ip_address
                 result_server
             end
