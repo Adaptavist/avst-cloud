@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
     spec.executables   = ["avst-cloud", "avst-cloud-puppet", "avst-cloud-rackspace", "avst-cloud-azure", "avst-cloud-azure-rm"]
     spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
     spec.require_paths = ["lib"]
-    spec.add_development_dependency "bundler", "~> 1.6"
+    spec.add_development_dependency "bundler", "~> 1.16.1"
     spec.add_development_dependency "rake"
     spec.add_dependency "fog"
     spec.add_dependency "fog-core", "1.43.0"
