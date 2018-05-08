@@ -7,7 +7,7 @@ notifications:
     template:
     - 'Gem - %{repository} #%{build_number} (%{build_url}) by %{author}: %{message}'
 rvm:
-- 2.0.0
+- 2.4.1
 deploy:
   provider: rubygems
   api_key:
