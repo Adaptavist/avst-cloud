@@ -1,5 +1,5 @@
 
-lock '3.2.1'
+lock '3.4.1'
 
 set :application, 'my_app_name'
 set :repo_url, ENV["cap_git_repo_url"]
