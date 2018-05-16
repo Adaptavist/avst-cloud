@@ -102,7 +102,7 @@ module AvstCloud
                         additional_hdds.each_value do |disk|
                             if disk['device_name'] && disk['ebs_size']
                                 create_ebs_volume << { 
-                                    :DeviceName => disk['   '],
+                                    :DeviceName => disk['device_name'],
                                     'Ebs.VolumeType' => 'gp2',
                                     'Ebs.VolumeSize' => disk['ebs_size']
                                 }
