@@ -85,7 +85,7 @@ module AvstCloud
                 logger.debug "availability_zone  - #{availability_zone}"
                 logger.debug "ebs_size           - #{ebs_size}"
                 logger.debug "hdd_device_path    - #{device_name}"
-                logger.debug "additional_hdds   - #{additional_hdds}"
+                logger.debug "additional_hdds    - #{additional_hdds}"
                 logger.debug "vpc                - #{vpc}"
 
                 create_ebs_volume = nil
@@ -98,7 +98,7 @@ module AvstCloud
                                                 'Ebs.VolumeSize' => ebs_size,
                                             } 
                                         ]
-                    if additional_hdds and additional_hdds.is_a?(Hash) {
+                    if additional_hdds and additional_hdds.is_a?(Hash)
                         additional_hdds.each_value do |disk|
                             if disk['device_name'] && disk['ebs_size']
                                 create_ebs_volume << { 
@@ -110,7 +110,7 @@ module AvstCloud
                                 logger.warn "Failed to create additional hdd, required params device_name (e.g. /dev/sda1) or ebs_size missing: #{disk}"
                             end 
                         end 
-                    }
+                    end
                 end
 
                 tags = {
