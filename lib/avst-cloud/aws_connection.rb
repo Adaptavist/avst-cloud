@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, vpc=nil, created_by=nil, custom_tags={})
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={})
 
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
@@ -85,6 +85,7 @@ module AvstCloud
                 logger.debug "availability_zone  - #{availability_zone}"
                 logger.debug "ebs_size           - #{ebs_size}"
                 logger.debug "hdd_device_path    - #{device_name}"
+                logger.debug "additional_hdds   - #{additional_hdds}"
                 logger.debug "vpc                - #{vpc}"
 
                 create_ebs_volume = nil
@@ -97,7 +98,21 @@ module AvstCloud
                                                 'Ebs.VolumeSize' => ebs_size,
                                             } 
                                         ]
+                    if additional_hdds and additional_hdds.is_a?(Hash) {
+                        additional_hdds.each do |disk|
+                            if disk['device_name'] && disk['ebs_size']
+                                create_ebs_volume << { 
+                                    :DeviceName => disk['device_name'],
+                                    'Ebs.VolumeType' => 'gp2',
+                                    'Ebs.VolumeSize' => disk['ebs_size']
+                                }
+                            else
+                                logger.warn "Failed to create additional hdd, required params device_name (e.g. /dev/sda1) or ebs_size missing: #{disk}"
+                            end 
+                        end 
+                    }
                 end
+
                 tags = {
                     'Name' => server_name,
                     'os' => os
