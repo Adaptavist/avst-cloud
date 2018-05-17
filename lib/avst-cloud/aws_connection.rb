@@ -100,10 +100,11 @@ module AvstCloud
                                         ]
                     if additional_hdds and additional_hdds.is_a?(Hash)
                         additional_hdds.each_value do |disk|
+                            volume_type = disk['volume_type'] || 'gp2'
                             if disk['device_name'] && disk['ebs_size']
                                 create_ebs_volume << { 
                                     :DeviceName => disk['device_name'],
-                                    'Ebs.VolumeType' => 'gp2',
+                                    'Ebs.VolumeType' => volume_type,
                                     'Ebs.VolumeSize' => disk['ebs_size']
                                 }
                             else
