@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
     spec.add_dependency "rvm-capistrano"
     spec.add_dependency "capistrano", "3.4.1"
     spec.add_dependency "capistrano-rvm"
-    spec.add_dependency "net-ssh", "3.0.2"
+    spec.add_dependency "net-ssh", "4.2.0"
     spec.add_dependency "sshkit", "~> 1.16.0"
     spec.add_dependency "derelict"
     spec.add_dependency "docopt", ">= 0.5.0"
