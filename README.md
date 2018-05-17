@@ -61,6 +61,16 @@ The application depends on several gems listed in avst-cloud.gemspec file. Bundl
 
 ### Rackspace
 
+# additional_hdds - hash of additional disks to attach to server, must contain device_name (e.g. /dev/sda1) and ebs_size per each hdd
+    additional_hdds:
+        'AppDisk':
+            device_name: '/dev/sdf'
+            ebs_size: '100'
+            volume_type: 'SSD' #default value
+        'DatabaseDisk':
+            device_name: '/dev/sdg'
+            ebs_size: '50'
+
 ```
 
     conn = AvstCloud::RackspaceConnection.new(provider_user, provider_pass, region)
