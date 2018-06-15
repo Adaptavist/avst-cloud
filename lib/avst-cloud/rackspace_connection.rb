@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::RackspaceServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, image_id, flavor_id='4')
+        def create_server(server_name, image_id, flavor_id='4', additional_hdds={})
             server_number, os="ubuntu14"
             
             logger.debug "Creating Rackspace server:"
@@ -71,7 +71,22 @@ module AvstCloud
 
                     logger.debug "The server has been successfully created, to login onto the server:\n\n"
                     logger.debug "\t ssh #{server.username}@#{server.public_ip_address}\n\n"
-
+                    if additional_hdds and additional_hdds.is_a?(Hash)
+                        additional_hdds.each do |disk_name, disk|
+                            if disk['device_name'] && disk['ebs_size']
+                                volume_type = disk['volume_type'] || 'SSD'
+                                volume = storageService.volumes.create(:size => disk['ebs_size'], :display_name => disk_name, :volume_type => volume_type)
+                                if volume && volume.id
+                                    wait_for_hdd(volume.id, 'available')
+                                    server.attach_volume volume.id, disk['device_name'] 
+                                else
+                                    logger.error "Failed to create volume, #{disk_name}"
+                                end
+                            else
+                                logger.warn "Failed to create additional hdd, required params device_name (e.g. /dev/sda1) or ebs_size missing: #{disk}"
+                            end 
+                        end 
+                    end
                 rescue Fog::Errors::TimeoutError
                     logger.debug "[TIMEOUT]\n\n"
                     logger.debug "This server is currently #{server.progress}% into the build process and is taking longer to complete than expected."
@@ -130,14 +145,40 @@ module AvstCloud
             unless @connection
                 logger.debug "Creating new connection to rackspace: #{@provider_user} #{Logging.mask_message(@provider_pass)} #{@region}"
                 @connection = Fog::Compute.new({
-                    :provider             => 'rackspace',
+                    :provider             => 'Rackspace',
                     :rackspace_username   => @provider_access_user,
                     :rackspace_api_key    => @provider_access_pass,
+                    :rackspace_auth_url  => Fog::Rackspace::UK_AUTH_ENDPOINT,
                     :version => :v2,  # Use Next Gen Cloud Servers
                     :rackspace_region => @region
                 })
             end
             @connection
+        end
+
+        def storageService
+            unless @storageService
+                logger.debug "Creating new connection to rackspace storage service: #{@provider_user} #{Logging.mask_message(@provider_pass)} #{@region}"
+                @storageService = Fog::Rackspace::BlockStorage.new({
+                    :rackspace_username  => @provider_access_user,        # Your Rackspace Username
+                    :rackspace_api_key   => @provider_access_pass,              # Your Rackspace API key
+                    :rackspace_auth_url  => Fog::Rackspace::UK_AUTH_ENDPOINT,
+                    :rackspace_region    => @region
+                })
+            end
+            @storageService
+        end
+
+        def wait_for_hdd(id, expected_state)
+            logger.debug "Waiting for hdd state change...".yellow
+            (1..60).each do |c|
+                hdd = storageService.volumes.get(id)
+                if hdd.state == expected_state
+                    break
+                end
+                logger.debug(.)
+                sleep 60
+            end
         end
     end
 end

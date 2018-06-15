@@ -35,6 +35,15 @@ The application depends on several gems listed in avst-cloud.gemspec file. Bundl
     # ebs_size - disk size
     # hdd_device_path - hdd device path, may differ per ami/os
     # availability_zone - aws availability zone
+    # additional_hdds - hash of additional disks to attach to server, must contain device_name (e.g. /dev/sda1) and ebs_size per each hdd
+    additional_hdds:
+        'AppDisk':
+            device_name: '/dev/sdf'
+            ebs_size: '100'
+        'DatabaseDisk':
+            device_name: '/dev/sdg'
+            ebs_size: '50'
+            volume_type: 'gp2' #default value
     # vpc - virtual private cloud, defaults to nil, make sure you adjust subned_id and security_group_ids accordingly when setting this option
 
     server = conn.create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone)
@@ -52,6 +61,16 @@ The application depends on several gems listed in avst-cloud.gemspec file. Bundl
 ```
 
 ### Rackspace
+
+# additional_hdds - hash of additional disks to attach to server, must contain device_name (e.g. /dev/sda1) and ebs_size per each hdd
+    additional_hdds:
+        'AppDisk':
+            device_name: '/dev/sdf'
+            ebs_size: '100'
+            volume_type: 'SSD' #default value
+        'DatabaseDisk':
+            device_name: '/dev/sdg'
+            ebs_size: '50'
 
 ```
 
