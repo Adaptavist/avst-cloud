@@ -33,15 +33,14 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={})
-
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil)
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
             os = os || "ubuntu-14"
             ami_image_id = ami_image_id || "ami-f0b11187"
             device_name = hdd_device_path || '/dev/sda1'
 
-            root_user = user_from_os(os)
+            root_user = root_username || user_from_os(os)
             unless File.file?(ssh_key)
                 logger.error "Could not find local SSH key '#{ssh_key}'".red
                 raise "Could not find local SSH key '#{ssh_key}'"
@@ -79,6 +78,7 @@ module AvstCloud
                 logger.debug "flavour            - #{flavour}"
                 logger.debug "key_name           - #{key_name}"
                 logger.debug "ssh_key            - #{ssh_key}"
+                logger.debug "root user          - #{root_user}"
                 logger.debug "subnet_id          - #{subnet_id}"
                 logger.debug "security_group_ids - #{security_group_ids}"
                 logger.debug "region             - #{@region}"
