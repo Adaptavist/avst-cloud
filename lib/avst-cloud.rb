@@ -15,7 +15,8 @@
 require 'net/ssh'
 require 'net/scp'
 require 'uri'
-require 'colorize'
+require 'rainbow/refinement'
+using Rainbow
 require 'fog'
 module AvstCloud
 end
