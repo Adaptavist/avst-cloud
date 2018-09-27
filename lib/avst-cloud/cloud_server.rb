@@ -39,9 +39,9 @@ module AvstCloud
             logger.debug "Bootstrap done. You can connect to server as #{@access_user} on #{@ip_address}"
         end
 
-        def provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder, avst_cloud_config_dir)
+        def provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder, avst_cloud_config_dir, download_dependencies_command)
             logger.debug "Provisioning #{@server_name}..."
-            provision_task = AvstCloud::CapistranoDeploymentTask.new(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder, avst_cloud_config_dir)
+            provision_task = AvstCloud::CapistranoDeploymentTask.new(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder, avst_cloud_config_dir, download_dependencies_command)
             run_tasks([AvstCloud::WaitUntilReady.new, provision_task])
             logger.debug "Provisioning done. You can connect to server on #{@ip_address}"
         end
