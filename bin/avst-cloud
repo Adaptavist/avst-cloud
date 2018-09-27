@@ -81,11 +81,13 @@ reference = nil # Tag
 # In this example we do not use puppet-runner, check doco
 puppet_runner = nil
 puppet_runner_prepare = nil
+avst_cloud_config_dir = nil
+download_dependencies_command = nil 
 custom_provisioning_commands = ["echo 'done' >> /tmp/done", "echo 'done' >> /tmp/done1"]
 server_tmp_folder="/tmp/avst_cloud_tmp_#{Time.now.to_i}"
 
 destination_folder = nil # defaults to /var/opt/puppet
-server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder)
+server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder, avst_cloud_config_dir, download_dependencies_command)
 
 # puts conn.server_status(server_name)
 # server.stop

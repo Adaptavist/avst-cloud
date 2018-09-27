@@ -176,7 +176,7 @@ module AvstCloud
 
     class CapistranoDeploymentTask < AvstCloud::Task
 
-        def initialize(git, branch, server_tmp_folder = "/tmp/avst_cloud_tmp_#{Time.now.to_i}", reference = nil, custom_provisioning_commands = [], puppet_runner = nil, puppet_runner_prepare = nil, destination_folder = '/var/opt/puppet', avst_cloud_config_dir = 'config')
+        def initialize(git, branch, server_tmp_folder = "/tmp/avst_cloud_tmp_#{Time.now.to_i}", reference = nil, custom_provisioning_commands = [], puppet_runner = nil, puppet_runner_prepare = nil, destination_folder = '/var/opt/puppet', avst_cloud_config_dir = 'config', download_dependencies_command = nil)
             unless git and (branch or reference)
                 logger.debug "You have to provide git repo url #{git} and git branch #{branch} or git tag reference #{reference}".red
                 raise "You have to provide git repo url #{git} and git branch #{branch} or git tag reference #{reference}"
@@ -188,6 +188,7 @@ module AvstCloud
             @reference = reference
             @custom_provisioning_commands = custom_provisioning_commands || []
             @puppet_runner = puppet_runner
+            @download_dependencies_command = download_dependencies_command
             @puppet_runner_prepare = puppet_runner_prepare
             @destination_folder = destination_folder || '/var/opt/puppet'
             @avst_cloud_config_dir = avst_cloud_config_dir || 'config'
@@ -225,6 +226,7 @@ module AvstCloud
             ENV['cap_access_user'] = server.access_user
             ENV['server_name'] = server.server_name
             ENV['puppet_runner'] = @puppet_runner
+            ENV['download_dependencies_command'] = @download_dependencies_command
             ENV['puppet_runner_prepare'] = @puppet_runner_prepare
             ENV['avst_cloud_tmp_folder'] = @server_tmp_folder
             ENV['custom_provisioning_commands'] = @custom_provisioning_commands.to_json

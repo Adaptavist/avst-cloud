@@ -161,7 +161,7 @@ If puppet_runner param is defined:
 * create avst_cloud_tmp_folder on the server
 * uploads the content of local folder config/custom_system_config to it and then moves it to destination_folder, in subfolder hiera-configs the only files uploaded may be server_name.yaml, server_name_facts.yaml and puppetfile_dictionary.yaml
 * if puppet_runner_prepare is defined, it will run it 
-* r10k puppetfile install
+* if download_dependencies_command is defined, it will run it, in the common case should be 'r10k puppetfile install'
 * clear /etc/puppet folder
 * link /var/opt/puppet/current to /etc/puppet
 * links /var/opt/puppet/current/hiera.yaml to /etc/hiera.yaml
@@ -178,9 +178,11 @@ If custom_provisioning_command is defined, it will run the command on the server
     branch = "master"
     puppet_runner = nil 
     puppet_runner_prepare = nil
+    avst_cloud_config_dir = nil
+    download_dependencies_command = nil
     custom_provisioning_command = "echo 'done' >> /tmp/done",
     destination_folder = nil
-    server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder)
+    server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder, avst_cloud_config_dir, download_dependencies_command)
 
 
 ```
@@ -218,12 +220,14 @@ branch = "master" # branch
 reference = nil # tag
 # In this example we are using puppet-runner to apply our puppet configs, check doco
 puppet_runner = "puppet-runner start"
+avst_cloud_config_dir = 'config'
+download_dependencies_command = 'gem install r10k -v 2.6.4; r10k puppetfile install'
 puppet_runner_prepare = "puppet-runner prepare -c ./hiera-configs -d ./hiera -f ./environments/production/modules/hosts/facts.d -t ./hiera-configs -r ./hiera-configs/puppetfile_dictionary.yaml -o ./Puppetfile -e /var/opt/puppet/secure/keys"
 
 custom_provisioning_commands = ["echo 'done' >> /tmp/done"]
 # defaults to /var/opt/puppet
 destination_folder = nil
 
-server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder)
+server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder. avst_cloud_config_dir, download_dependencies_command)
 
 ```
