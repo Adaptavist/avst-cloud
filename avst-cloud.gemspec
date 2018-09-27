@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
     spec.name          = "avst-cloud"
-    spec.version       = '0.1.33'
+    spec.version       = '0.1.34'
     spec.authors       = ["Martin Brehovsky", "Jon Bevan", "Matthew Hope"]
     spec.email         = ["mbrehovsky@adaptavist.com", "jbevan@adaptavist.com", "mhope@adaptavist.com"]
     spec.summary       = %q{Automated creation, bootstrapping and provisioning of servers }
