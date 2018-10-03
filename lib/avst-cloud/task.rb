@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require_relative './logging.rb'
-
+using Rainbow
 module AvstCloud
     class Task
         include Logging

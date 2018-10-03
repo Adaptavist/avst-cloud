@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require_relative './cloud_connection.rb'
-
+using Rainbow
 module AvstCloud
     
     class AwsConnection < AvstCloud::CloudConnection
