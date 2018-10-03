@@ -14,7 +14,7 @@
 
 require_relative './cloud_connection.rb'
 require 'fog/azurerm'
-
+using Rainbow
 module AvstCloud
     
     class AzureRmConnection < AvstCloud::CloudConnection

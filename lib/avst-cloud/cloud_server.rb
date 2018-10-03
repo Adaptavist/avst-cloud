@@ -14,7 +14,7 @@
 
 require_relative './logging.rb'
 require_relative './task.rb'
-
+using Rainbow
 module AvstCloud
     class CloudServer
         include Logging

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require_relative './cloud_server.rb'
-
+using Rainbow
 module AvstCloud
     class AzureServer < AvstCloud::CloudServer
 
