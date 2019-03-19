@@ -35,7 +35,7 @@ module AvstCloud
             AvstCloud::GcpServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_public_key, ssh_private_key, subnet_id, security_group_ids, root_disk_size, machine_type_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags=[], root_username=nil, delete_root_disk=true)
+        def create_server(server_name, flavour, os, key_name, ssh_public_key, ssh_private_key, subnet_id, security_group_ids, root_disk_size, root_disk_type, machine_type_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags=[], root_username=nil, delete_root_disk=true)
             flavour = flavour || "g1-small"
             os = os || "centos-7"
             vpc_name = vpc || "default"
@@ -99,13 +99,16 @@ module AvstCloud
                 logger.debug "additional_hdds    - #{additional_hdds}"
                 logger.debug "vpc                - #{vpc_name}"
 
-
-                logger.debug "Creating root disk"
+                # Create root disk
                 # TODO check if this exists and exit politely, or catch the exception and exit politely
+                root_disk_type = root_disk_type || 'pd-standard'
+                logger.debug "Creating root disk with type #{root_disk_type}"
+                root_disk_url="https://www.googleapis.com/compute/v1/projects/#{@project}/zones/#{availability_zone}/diskTypes/#{root_disk_type}"
                 disk = connect.disks.create :name => "#{server_name}-root",
                                             :size_gb => root_disk_size,
                                             :zone => availability_zone,
-                                            :source_image => machine_type_id
+                                            :source_image => machine_type_id,
+                                            :type => root_disk_url
                 
                 # wait for the disk to be ready
                 logger.debug "Waiting for root disk to be ready"
@@ -118,13 +121,15 @@ module AvstCloud
                     disk_count=1
                     additional_hdds.each_value do |disk|
                         #TODO wortk out how to set disk type!
-                        #volume_type = disk['volume_type'] || 'gp2'
                         if disk['disk_size']
-                            logger.debug "Creating additional disk #{disk_count}"
+                            disk_type = disk['disk_type'] || 'pd-standard'
+                            logger.debug "Creating additional disk #{disk_count} with type #{disk_type}"
+                            disk_url="https://www.googleapis.com/compute/v1/projects/#{@project}/zones/#{availability_zone}/diskTypes/#{disk_type}"
                             delete_disk_with_vm = disk['delete_disk_with_vm'] || false
                             additional_disk = connect.disks.create :name => "#{server_name}-disk#{disk_count}",
                                                                    :size_gb => disk['disk_size'],
-                                                                   :zone => availability_zone
+                                                                   :zone => availability_zone,
+                                                                   :type => disk_url
                             # wait for additional disk
                             logger.debug "Waiting for additional disk #{disk_count}"
                             additional_disk.wait_for { ready? }
