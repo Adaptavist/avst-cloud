@@ -19,9 +19,10 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency "rake"
     spec.add_dependency "fog"
     spec.add_dependency "fog-core", "1.43.0"
-    spec.add_dependency "fog-azure"
-    spec.add_dependency "fog-azure-rm", "0.0.3"
-    spec.add_dependency "azure"
+    ###spec.add_dependency "fog-azure"
+    ###spec.add_dependency "fog-azure-rm", "0.0.3"
+    spec.add_dependency "fog-google", "1.8.2"
+    ###spec.add_dependency "azure"
     spec.add_dependency "rvm-capistrano"
     spec.add_dependency "capistrano", "3.4.1"
     spec.add_dependency "capistrano-rvm"
@@ -32,4 +33,5 @@ Gem::Specification.new do |spec|
     spec.add_dependency "rainbow", '3.0.0'
     spec.add_dependency "nokogiri", '1.8.2'
 end
+
 
