@@ -46,13 +46,13 @@ module AvstCloud
             end
 
             unless File.file?(ssh_public_key)
-                logger.error "Could not find local public SSH key '#{ssh_key}'".red
-                raise "Could not find local SSH public key '#{ssh_key}'"
+                logger.error "Could not find local public SSH key '#{ssh_public_key}'".red
+                raise "Could not find local SSH public key '#{ssh_public_key}'"
             end
 
             unless File.file?(ssh_private_key)
-                logger.error "Could not find local private SSH key '#{ssh_key}'".red
-                raise "Could not find local SSH private key '#{ssh_key}'"
+                logger.error "Could not find local private SSH key '#{ssh_public_key}'".red
+                raise "Could not find local SSH private key '#{ssh_public_key}'"
             end
             root_user = root_username || user_from_key(os)
 
@@ -76,7 +76,7 @@ module AvstCloud
                 end
                 server = restartable_servers.first
                 server.start
-                result_server = AvstCloud::GcpServer.new(server, server_name, server.public_ip_address, root_user, ssh_public_key)
+                result_server = AvstCloud::GcpServer.new(server, server_name, server.public_ip_address, root_user, ssh_private_key)
                 result_server.wait_for_state() {|serv| serv.ready?}
                 logger.debug "[DONE]\n\n"
                 logger.debug "The server was successfully re-started.\n\n"
@@ -121,13 +121,13 @@ module AvstCloud
                     disk_count=1
                     additional_hdds.each_value do |disk|
                         #TODO wortk out how to set disk type!
-                        if disk['disk_size']
+                        if disk['disk_size'] || disk['ebs_size']
                             disk_type = disk['disk_type'] || 'pd-standard'
                             logger.debug "Creating additional disk #{disk_count} with type #{disk_type}"
                             disk_url="https://www.googleapis.com/compute/v1/projects/#{@project}/zones/#{availability_zone}/diskTypes/#{disk_type}"
                             delete_disk_with_vm = disk['delete_disk_with_vm'] || false
                             additional_disk = connect.disks.create :name => "#{server_name}-disk#{disk_count}",
-                                                                   :size_gb => disk['disk_size'],
+                                                                   :size_gb => disk['disk_size'] || disk['ebs_size'],
                                                                    :zone => availability_zone,
                                                                    :type => disk_url
                             # wait for additional disk
@@ -171,7 +171,7 @@ module AvstCloud
                                                 :username => root_user,
                                                 :tags => tags
 
-                result_server = AvstCloud::GcpServer.new(server, server_name, nil, root_user, ssh_public_key)
+                result_server = AvstCloud::GcpServer.new(server, server_name, nil, root_user, ssh_private_key)
                 # result_server.logger = logger
                 # Check every 5 seconds to see if server is in the active state (ready?).
                 # If the server has not been built in 5 minutes (600 seconds) an exception will be raised.
