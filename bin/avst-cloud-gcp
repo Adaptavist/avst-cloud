@@ -1,0 +1,124 @@
+#!/usr/bin/env ruby 
+
+# Copyright 2015 Adaptavist.com Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+require 'avst-cloud'
+require 'avst-cloud/gcp_connection'
+require 'avst-cloud/gcp_server'
+
+avst_cloud_base="#{File.expand_path("../../", __FILE__)}"
+
+# FILL IN YOUR GCP ACCOUNT DETAILS (Access Key ID and Secret Access Key), GIT REPO AND MAKE SURE 
+# FILES IN files FOLDER HAS CORRECT CONTENT
+provider_user=''
+provider_pass=''
+project=''
+region='europe-west1'
+
+# Initiate connector object
+conn = AvstCloud::GcpConnection.new(provider_user, provider_pass, region, project)
+
+server_name        = 'hostname1'
+
+flavour            = nil # defaults to t2.micro
+hdd_device_path    = nil # defaults to '/dev/sda1'
+machine_type_id    = nil
+os                 = "centos-7"
+
+key_name           = 'admin' # key name, e.g. admin
+ssh_public_key     = "path/to/your/admin.pem.pub" # Full path to ssh public key, e.g. /tmp/admin.pem.pub
+ssh_private_key    = "path/to/your/admin.pem" # Full path to ssh private key, e.g. /tmp/admin.pem
+subnet_id          = nil # Your subnet
+security_group_ids = [''] # List of security groups
+root_disk_size     = nil # In GB
+additional_hdds    = {}
+vpc                = nil
+created_by         = nil
+root_username      = nil
+custom_tags        = []
+availability_zone  = 'europe-west1-b'
+delete_root_disk   = true
+
+# display server status
+##server_detail = conn.server_status(server_name)
+##puts server_detail.inspect
+##conn.list_zones
+##conn.list_flavours(availability_zone)
+##conn.list_images
+##conn.list_networks
+##conn.list_disk_types(availability_zone)
+
+server = conn.create_server(server_name, flavour, os, key_name, ssh_public_key, ssh_private_key, subnet_id, security_group_ids, root_disk_size, machine_type_id, availability_zone, additional_hdds, vpc, created_by, custom_tags, root_username, delete_root_disk)
+
+# server = conn.server(server_name, root_username, ssh_private_key, os)
+# server.destroy
+
+# puts conn.server_status(server_name)
+# exit
+
+pre_upload_commands = [
+    "echo 'pre_upload_command was here' >> /tmp/pre_upload",
+]
+
+custom_file_uploads = {
+    "#{avst_cloud_base}/files/id_rsa" => "/tmp/.",
+    "#{avst_cloud_base}/files/known_hosts" => "/tmp/."
+}
+
+# Uploading ssh keys to access git repo in provisioning stage, make sure you provide correct keys
+post_upload_commands = [
+    "mkdir /home/ubuntu/.ssh",
+    "mv /tmp/id_rsa /home/ubuntu/.ssh/.",
+    "mv /tmp/known_hosts /home/ubuntu/.ssh/.",
+    "chmod 0600 /home/ubuntu/.ssh/known_hosts",
+    "chmod 0600 /home/ubuntu/.ssh/id_rsa",
+    "mkdir /var/opt/puppet",
+    "chown ubuntu /var/opt/puppet",
+    "apt-get update && apt-get install -o Dpkg::Options::='--force-confold' -f -y git puppet-common puppet"
+]
+
+remote_server_debug = true
+debug_structured_log = false
+
+##!##server.bootstrap(pre_upload_commands, custom_file_uploads, post_upload_commands, remote_server_debug, debug_structured_log, false)
+
+git = "ssh://git@you_repo.git"
+branch = "master" 
+reference = nil # Tag
+# In this example we do not use puppet-runner, check doco
+puppet_runner = nil
+puppet_runner_prepare = nil
+avst_cloud_config_dir = nil
+download_dependencies_command = nil 
+custom_provisioning_commands = ["echo 'done' >> /tmp/done", "echo 'done' >> /tmp/done1"]
+server_tmp_folder="/tmp/avst_cloud_tmp_#{Time.now.to_i}"
+
+destination_folder = nil # defaults to /var/opt/puppet
+##!##server.provision(git, branch, server_tmp_folder, reference, custom_provisioning_commands, puppet_runner, puppet_runner_prepare, destination_folder, avst_cloud_config_dir, download_dependencies_command)
+
+# puts conn.server_status(server_name)
+# server.stop
+
+# puts conn.server_status(server_name)
+# server.start
+
+# puts conn.server_status(server_name)
+
+# custom_commands=nil
+# server_tmp_folder="/tmp/done"
+# server.post_provisioning_cleanup(custom_commands, os, remote_server_debug, server_tmp_folder)
+
+# server.destroy
+# puts conn.server_status(server_name)

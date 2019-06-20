@@ -176,7 +176,6 @@ module AvstCloud
                 if hdd.state == expected_state
                     break
                 end
-                logger.debug(.)
                 sleep 60
             end
         end
