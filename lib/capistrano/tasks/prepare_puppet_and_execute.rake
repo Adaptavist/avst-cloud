@@ -54,10 +54,6 @@ task :prepare_puppet_and_execute do
             execute :link_puppet
             execute :link_hiera
 
-            if File.exist?("#{ENV["avst_cloud_config_dir"]}/keys")
-                upload! "#{ENV["avst_cloud_config_dir"]}/keys", "/etc/puppet/config", recursive: true
-            end
-
             within '/etc/puppet' do
                 begin
                         execute :execute_puppet_runner
