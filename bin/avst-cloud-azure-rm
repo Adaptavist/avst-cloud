@@ -39,7 +39,7 @@ platform = nil # defaults to Linux
 server_name = "hostname1"
 user = "ubuntu"
 # Must comply to Azure pass guidelines
-password = "superSecretUbuntuPass111_@" 
+password = "" 
 location = nil # Will default to West Europe
 resource_group = "new_resource_group" # if RG does not exists it will create it
 vm_size = nil # Defaults to Basic_A0
