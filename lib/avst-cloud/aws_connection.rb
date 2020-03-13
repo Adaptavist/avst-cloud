@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil)
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false)
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
             os = os || "ubuntu-14"
@@ -122,6 +122,7 @@ module AvstCloud
                     tags['created_by'] = created_by
                 end
                 tags.merge!(custom_tags)
+
                 # create server
                 server = connect.servers.create :tags => tags,
                                                 :flavor_id => flavour,
@@ -133,7 +134,6 @@ module AvstCloud
                                                 :availability_zone => availability_zone,
                                                 :block_device_mapping => create_ebs_volume,
                                                 :vpc => vpc
-
                 
                 result_server = AvstCloud::AwsServer.new(server, server_name, nil, root_user, ssh_key)
                 # result_server.logger = logger
@@ -142,6 +142,27 @@ module AvstCloud
                 result_server.wait_for_state() {|serv| serv.ready?}
 
                 logger.debug "[DONE]\n\n"
+
+                # create Elastic IP Address if required
+                if create_elastic_ip
+                    logger.debug("Attempting to create elastic IP address")
+                    elastic_ip = connect.allocate_address("vpc").body
+                    elastic_ip_address = elastic_ip['publicIp']
+                    # if we have a server id and an Elastic public IP attempt to join the two togehter
+                    if server.id and elastic_ip_address
+                        logger.debug ("Elastic IP #{elastic_ip_address} created, attempting to allocate to server")
+                        connect.associate_address(server.id, elastic_ip_address)
+                        # reacquire server object as IP has, probably, changed
+                        server = find_fog_server(server_name)
+
+                        # create tag on the Elastic IP 
+                        # TODO: add ability for other tags to be defined by the user
+                        logger.debug("Creating tags on Elastic IP Address #{elastic_ip}\n\n")
+                        connect.tags.create(:resource_id => elastic_ip['allocationId'], :key => "Name", :value => server_name)
+                    else
+                        logger.warn("Elastic IP creation failed, proceeding with non Elastic IP\n\n")
+                    end
+                end
 
                 logger.debug "The server has been successfully created, to login onto the server:\n"
                 logger.debug "\t ssh -i #{ssh_key} #{root_user}@#{server.public_ip_address}\n"
@@ -201,6 +222,18 @@ module AvstCloud
             servers.first
         end
 
+        def delete_elastic_ip(ip_address)
+            address = is_elastic_ip(ip_address)
+            if address
+                logger.debug "Found Elastic IP #{address.public_ip}, attempting to delete"
+                logger.debug "Elastic IP #{ip_address} deleted" if address.destroy 
+                return true
+            else
+                logger.debug "IP #{ip_address} does NOT appear to be an Elastic IP"
+            end
+            return false
+        end
+
     private
         def user_from_os(os)
             case os.to_s
@@ -232,6 +265,15 @@ module AvstCloud
         
         def all_named_servers(server_name)
             connect.servers.all({'tag:Name' => server_name})
+        end
+
+        def is_elastic_ip(ip_address)
+            connect.addresses.each do |address|
+                if address.public_ip == ip_address
+                    return address
+                end
+            end
+            return false
         end
     end
 end
