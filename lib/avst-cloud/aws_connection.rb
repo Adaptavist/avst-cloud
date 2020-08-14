@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil)
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil, delete_root_disk=true)
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
             os = os || "ubuntu-14"
@@ -101,6 +101,12 @@ module AvstCloud
                     if encrypt_root
                         root_disk.merge!('Ebs.Encrypted' => true, 'Ebs.KmsKeyId' => root_encryption_key||nil )
                     end
+
+                    # if we do not want to delete the root disk with the VM set the flag
+                    if delete_root_disk == false || delete_root_disk == 'false'
+                        root_disk.merge!('Ebs.DeleteOnTermination' => false)
+                    end
+                                
                     create_ebs_volume = [ root_disk ] 
                     if additional_hdds and additional_hdds.is_a?(Hash)
                         additional_hdds.each_value do |disk|
@@ -115,6 +121,10 @@ module AvstCloud
                                 # if not set to nil and thereby defalt to the default key for EBS
                                 if disk['encrypted']
                                     disk_hash.merge!('Ebs.Encrypted' => true, 'Ebs.KmsKeyId' => disk['encryption_key_id'] || nil)
+                                end
+                                # if we do not want to delete the additional disk with the VM set the flag
+                                if disk['delete_disk_with_vm'] == false || disk['delete_disk_with_vm'] == 'false'
+                                    disk_hash.merge!('Ebs.DeleteOnTermination' => false)
                                 end
                                 create_ebs_volume << disk_hash
                             else
