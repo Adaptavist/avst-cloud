@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false)
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil)
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
             os = os || "ubuntu-14"
@@ -91,22 +91,32 @@ module AvstCloud
                 create_ebs_volume = nil
                 if ebs_size
                     # in case of centos ami we need to use /dev/xvda this is ami dependent
-                    create_ebs_volume = [ 
-                                            { 
-                                                :DeviceName => device_name,
-                                                'Ebs.VolumeType' => 'gp2',
-                                                'Ebs.VolumeSize' => ebs_size,
-                                            } 
-                                        ]
+                    root_disk = { 
+                        :DeviceName => device_name,
+                        'Ebs.VolumeType' => 'gp2',
+                        'Ebs.VolumeSize' => ebs_size,
+                    } 
+                    # if the root disk is to be encrypted set te "Encrypted" flag to true, if there is an optional KMS Key ID send that,
+                    # if not set to nil and thereby defalt to the default key for EBS
+                    if encrypt_root
+                        root_disk.merge!('Ebs.Encrypted' => true, 'Ebs.KmsKeyId' => root_encryption_key||nil )
+                    end
+                    create_ebs_volume = [ root_disk ] 
                     if additional_hdds and additional_hdds.is_a?(Hash)
                         additional_hdds.each_value do |disk|
                             volume_type = disk['volume_type'] || 'gp2'
                             if disk['device_name'] && disk['ebs_size']
-                                create_ebs_volume << { 
+                                disk_hash = {
                                     :DeviceName => disk['device_name'],
                                     'Ebs.VolumeType' => volume_type,
                                     'Ebs.VolumeSize' => disk['ebs_size']
                                 }
+                                # if the additional disk is to be encrypted set te "Encrypted" flag to true, if there is an optional KMS Key ID send that,
+                                # if not set to nil and thereby defalt to the default key for EBS
+                                if disk['encrypted']
+                                    disk_hash.merge!('Ebs.Encrypted' => true, 'Ebs.KmsKeyId' => disk['encryption_key_id'] || nil)
+                                end
+                                create_ebs_volume << disk_hash
                             else
                                 logger.warn "Failed to create additional hdd, required params device_name (e.g. /dev/sda1) or ebs_size missing: #{disk}"
                             end 
