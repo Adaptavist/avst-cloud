@@ -31,7 +31,8 @@ Gem::Specification.new do |spec|
     spec.add_dependency "derelict"
     spec.add_dependency "docopt", ">= 0.5.0"
     spec.add_dependency "rainbow", '3.0.0'
-    spec.add_dependency "nokogiri", ">= 1.8.5"
+    spec.add_dependency "nokogiri", "~> 1.8.5"
+    spec.add_dependency "signet", "0.14.1"
 end
 
 
