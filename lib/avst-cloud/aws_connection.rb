@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil, delete_root_disk=true, root_disk_type='gp2', root_disk_iops=0)
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil, delete_root_disk=true, root_disk_type='gp2', root_disk_iops=0, private_ip=nil)
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
             os = os || "ubuntu-14"
@@ -87,6 +87,8 @@ module AvstCloud
                 logger.debug "hdd_device_path    - #{device_name}"
                 logger.debug "additional_hdds    - #{additional_hdds}"
                 logger.debug "vpc                - #{vpc}"
+                logger.debug "create_elastic_ip  - #{create_elastic_ip}"
+                logger.debug "custom_private_ip  - #{private_ip}"
 
                 create_ebs_volume = nil
                 if ebs_size
@@ -167,7 +169,8 @@ module AvstCloud
                                                 :security_group_ids => security_group_ids,
                                                 :availability_zone => availability_zone,
                                                 :block_device_mapping => create_ebs_volume,
-                                                :vpc => vpc
+                                                :vpc => vpc,
+                                                :private_ip_address => private_ip
                 
                 result_server = AvstCloud::AwsServer.new(server, server_name, nil, root_user, ssh_key)
                 # result_server.logger = logger
