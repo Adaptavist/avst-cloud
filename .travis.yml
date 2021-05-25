@@ -2,7 +2,7 @@ language: ruby
 before_install:
   # https://github.com/travis-ci/travis-rubies/issues/57#issuecomment-458981237
   - "find /home/travis/.rvm/rubies -wholename '*default/bundler-*.gemspec' -delete"
-  - gem install bundler --version 1.17.3
+  - gem install bundler --version 2.2.10
 notifications:
   email: false
   hipchat:
