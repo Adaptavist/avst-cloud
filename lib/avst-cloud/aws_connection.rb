@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil, delete_root_disk=true, root_disk_type='gp2', root_disk_iops=0, private_ip=nil)
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil, delete_root_disk=true, root_disk_type='gp2', root_disk_iops=0, private_ip=nil, public_ip=nil)
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
             os = os || "ubuntu-14"
@@ -89,6 +89,31 @@ module AvstCloud
                 logger.debug "vpc                - #{vpc}"
                 logger.debug "create_elastic_ip  - #{create_elastic_ip}"
                 logger.debug "custom_private_ip  - #{private_ip}"
+
+                elastic_ip_address = nil
+
+                # if a public IP has been specified, try to lookup the elastic IP and use it
+                if public_ip
+                    require "resolv"
+                    # we can find IP based on either its address or its Name tag, if the provided value is not an IP try by tag
+                    if public_ip  =~ Resolv::IPv4::Regex
+                        found_eip = connect.describe_addresses('public-ip' => [public_ip])
+                    else
+                        found_eip = connect.describe_addresses('tag:Name' => [public_ip])
+                    end
+                    if ! found_eip.data[:body]['addressesSet'][0].nil?
+                        # if we have found the IP and its not already associated use it
+                        if found_eip.data[:body]['addressesSet'][0]['publicIp'] and ! found_eip.data[:body]['addressesSet'][0]['associationId']
+                            elastic_ip =found_eip.data[:body]['addressesSet'][0]
+                            elastic_ip_address = elastic_ip['publicIp']
+                            logger.debug "Requested Elastic IP found and is unallocated, an attempt to attach this to the VM will be made"
+                        else
+                             logger.warn "Requested Elastic IP exist but is already allocated, the system will be created but will NOT use this IP"
+                        end
+                    else
+                        logger.warn "Requested Elastic IP does not exist, the system will be created but will NOT use this IP"
+                    end
+                end
 
                 create_ebs_volume = nil
                 if ebs_size
@@ -181,24 +206,31 @@ module AvstCloud
                 logger.debug "[DONE]\n\n"
 
                 # create Elastic IP Address if required
-                if create_elastic_ip
-                    logger.debug("Attempting to create elastic IP address")
-                    elastic_ip = connect.allocate_address("vpc").body
-                    elastic_ip_address = elastic_ip['publicIp']
-                    # if we have a server id and an Elastic public IP attempt to join the two togehter
-                    if server.id and elastic_ip_address
-                        logger.debug ("Elastic IP #{elastic_ip_address} created, attempting to allocate to server")
-                        connect.associate_address(server.id, elastic_ip_address)
-                        # reacquire server object as IP has, probably, changed
-                        server = find_fog_server(server_name)
-
-                        # create tag on the Elastic IP 
-                        # TODO: add ability for other tags to be defined by the user
-                        logger.debug("Creating tags on Elastic IP Address #{elastic_ip}\n\n")
-                        connect.tags.create(:resource_id => elastic_ip['allocationId'], :key => "Name", :value => server_name)
+                if create_elastic_ip  
+                    if elastic_ip_address.nil?
+                        logger.debug("Attempting to create elastic IP address")
+                        elastic_ip = connect.allocate_address("vpc").body
+                        elastic_ip_address = elastic_ip['publicIp']
+                        logger.warn "Elastic IP creation failed, proceeding with non Elastic IP\n\n"  if ! elastic_ip_address
                     else
-                        logger.warn("Elastic IP creation failed, proceeding with non Elastic IP\n\n")
+                        logger.warn "You have asked to create an Elastic IP and ALSO use an existing one"
+                        logger.warn "The existing IP is avaliable and as such will be used INSTEAD of creating a new one!"
                     end
+                end
+
+                # if we have a server id and an Elastic public IP attempt to join the two togehter
+                if server.id and elastic_ip_address
+                    logger.debug ("Attempting to allocate Elastic IP #{elastic_ip_address} to server")
+                    connect.associate_address(server.id, elastic_ip_address)
+                    # reacquire server object as IP has, probably, changed
+                    server = find_fog_server(server_name)
+
+                    # create tag on the Elastic IP 
+                    # TODO: add ability for other tags to be defined by the user
+                    logger.debug("Creating tags on Elastic IP Address #{elastic_ip}\n\n")
+                    connect.tags.create(:resource_id => elastic_ip['allocationId'], :key => "Name", :value => server_name)
+                else
+                    logger.warn("EAllocation of Elastic IP failed, proceeding with non Elastic IP\n\n")
                 end
 
                 logger.debug "The server has been successfully created, to login onto the server:\n"

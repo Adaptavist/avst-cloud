@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
     spec.name          = "avst-cloud"
-    spec.version       = '0.1.40'
+    spec.version       = '0.1.41'
     spec.authors       = ["Martin Brehovsky", "Jon Bevan", "Matthew Hope"]
     spec.email         = ["mbrehovsky@adaptavist.com", "jbevan@adaptavist.com", "mhope@adaptavist.com"]
     spec.summary       = %q{Automated creation, bootstrapping and provisioning of servers }
@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
     spec.executables   = ["avst-cloud", "avst-cloud-puppet", "avst-cloud-rackspace", "avst-cloud-azure", "avst-cloud-azure-rm"]
     spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
     spec.require_paths = ["lib"]
-    spec.add_development_dependency "bundler", "~> 1.17.3"
+    spec.add_development_dependency "bundler", "2.2.10"
     spec.add_development_dependency "rake"
     spec.add_dependency "fog"
     spec.add_dependency "fog-core", "1.43.0"
@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
     spec.add_dependency "derelict"
     spec.add_dependency "docopt", ">= 0.5.0"
     spec.add_dependency "rainbow", '3.0.0'
-    spec.add_dependency "nokogiri", "~> 1.8.5"
+    spec.add_dependency "nokogiri", "~> 1.10.8"
     spec.add_dependency "signet", "0.14.1"
 end
 
