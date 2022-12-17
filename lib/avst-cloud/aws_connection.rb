@@ -33,7 +33,7 @@ module AvstCloud
             AvstCloud::AwsServer.new(server, server_name, server.public_ip_address, root_user, root_password)
         end
 
-        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil, delete_root_disk=true, root_disk_type='gp2', root_disk_iops=0, private_ip=nil, public_ip=nil)
+        def create_server(server_name, flavour, os, key_name, ssh_key, subnet_id, security_group_ids, ebs_size, hdd_device_path, ami_image_id, availability_zone, additional_hdds={}, vpc=nil, created_by=nil, custom_tags={}, root_username=nil, create_elastic_ip=false, encrypt_root=false ,root_encryption_key=nil, delete_root_disk=true, root_disk_type='gp2', root_disk_iops=0, root_disk_throughput=0, private_ip=nil, public_ip=nil)
             # Permit named instances from DEFAULT_FLAVOURS
             flavour = flavour || "t2.micro"
             os = os || "ubuntu-14"
@@ -135,8 +135,15 @@ module AvstCloud
                     end
 
                     # if this is a provisioned IOPS disk set the iops value
-                    if root_disk_type == 'io1'
+                    if root_disk_type == 'io1' or root_disk_type == 'io2'
                         root_disk.merge!('Ebs.Iops' => root_disk_iops)
+                    elsif root_disk_type == 'gp3'
+                        # set default GP3 values if no valued provided
+                        root_disk_iops = 3000 if root_disk_iops == 0
+                        root_disk_throughput = 125 if root_disk_throughput == 0
+
+                        root_disk.merge!('Ebs.Iops' => root_disk_iops)
+                        root_disk.merge!('Ebs.Throughput' => root_disk_throughput)
                     end
                     # add the root disk as the first entry in the array of disks to create/attach
                     create_ebs_volume = [ root_disk ] 
@@ -162,8 +169,11 @@ module AvstCloud
                                 end
 
                                 # if the additional disk is an provisioned IOPS disk set the iops value
-                                if volume_type == 'io1'
+                                if volume_type == 'io1' or volume_type == 'io2'
                                     disk_hash.merge!('Ebs.Iops' => disk['volume_iops'] || 0)
+                                elsif volume_type == 'gp3'
+                                    disk_hash.merge!('Ebs.Iops' => disk['volume_iops'] || 3000)
+                                    disk_hash.merge!('Ebs.Throughput' => disk['volume_throughput'] || 125)
                                 end
 
                                 # add this disk to the array of all disks to create/attach
