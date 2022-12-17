@@ -15,6 +15,7 @@ Gem::Specification.new do |spec|
     spec.executables   = ["avst-cloud", "avst-cloud-puppet", "avst-cloud-rackspace", "avst-cloud-azure", "avst-cloud-azure-rm"]
     spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
     spec.require_paths = ["lib"]
+    spec.required_ruby_version = '~> 2.6.0'
     spec.add_development_dependency "bundler", "2.2.33"
     spec.add_development_dependency "rake"
     spec.add_dependency "fog"
@@ -31,7 +32,7 @@ Gem::Specification.new do |spec|
     spec.add_dependency "derelict"
     spec.add_dependency "docopt", ">= 0.5.0"
     spec.add_dependency "rainbow", '3.0.0'
-    spec.add_dependency "nokogiri", "~> 1.10.8"
+    spec.add_dependency "nokogiri", "~> 1.13.9"
     spec.add_dependency "signet", "0.14.1"
 end
 
